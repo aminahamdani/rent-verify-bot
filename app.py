@@ -5,12 +5,32 @@ import logging
 from io import StringIO
 from datetime import datetime
 from functools import wraps
+from pathlib import Path
 from flask import Flask, request, render_template, session, redirect, url_for, flash, make_response
 from twilio.twiml.messaging_response import MessagingResponse
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Get the absolute path to the .env file
+BASE_DIR = Path(__file__).resolve().parent
+ENV_PATH = BASE_DIR / '.env'
+
+print(f"[DEBUG] Script location: {__file__}")
+print(f"[DEBUG] Base directory: {BASE_DIR}")
+print(f"[DEBUG] Looking for .env at: {ENV_PATH}")
+print(f"[DEBUG] .env file exists: {ENV_PATH.exists()}")
+
+# Load environment variables with explicit path
+if ENV_PATH.exists():
+    load_dotenv(dotenv_path=ENV_PATH, override=True)
+    print("[DEBUG] .env file loaded successfully")
+else:
+    print("[DEBUG] WARNING: .env file not found!")
+    load_dotenv()  # Try default location
+
+# Debug: Check what's in the environment
+print(f"[DEBUG] ADMIN_USERNAME from env: '{os.getenv('ADMIN_USERNAME')}'")
+print(f"[DEBUG] ADMIN_PASSWORD from env: '{os.getenv('ADMIN_PASSWORD')}'")
+print(f"[DEBUG] SECRET_KEY from env: '{os.getenv('SECRET_KEY')}'")
 
 # ==================== Logging Configuration ====================
 
@@ -30,8 +50,21 @@ app = Flask(__name__, instance_relative_config=True)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Admin credentials from environment variables
-ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'changeme')
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+
+# Fallback to defaults if not set (should not happen if .env is loaded)
+if not ADMIN_USERNAME:
+    print("[DEBUG] WARNING: ADMIN_USERNAME not found in .env, using default 'admin'")
+    ADMIN_USERNAME = 'admin'
+if not ADMIN_PASSWORD:
+    print("[DEBUG] WARNING: ADMIN_PASSWORD not found in .env, using default 'changeme'")
+    ADMIN_PASSWORD = 'changeme'
+
+# Debug: Print final credentials
+print(f"[DEBUG] Final ADMIN_USERNAME: '{ADMIN_USERNAME}' (type: {type(ADMIN_USERNAME)})")
+print(f"[DEBUG] Final ADMIN_PASSWORD: '{ADMIN_PASSWORD}' (type: {type(ADMIN_PASSWORD)})")
+print("[DEBUG] " + "="*50)
 
 # Ensure the instance folder exists
 os.makedirs(app.instance_path, exist_ok=True)
@@ -99,6 +132,15 @@ def login():
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         
+        # Debug: Print credentials for troubleshooting
+        print(f"[DEBUG] Login attempt:")
+        print(f"  Entered username: '{username}' (length: {len(username)})")
+        print(f"  Entered password: '{password}' (length: {len(password)})")
+        print(f"  Expected username: '{ADMIN_USERNAME}' (length: {len(ADMIN_USERNAME)})")
+        print(f"  Expected password: '{ADMIN_PASSWORD}' (length: {len(ADMIN_PASSWORD)})")
+        print(f"  Username match: {username == ADMIN_USERNAME}")
+        print(f"  Password match: {password == ADMIN_PASSWORD}")
+        
         if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['logged_in'] = True
             session['username'] = username
@@ -134,6 +176,58 @@ def sms_reply():
         
         logging.info(f"Received SMS from {sender_phone}: {incoming_msg}")
         
+        # Create Twilio response object
+        resp = MessagingResponse()
+        
+        # Validate and process the message
+        if incoming_msg.upper() == 'YES':
+            try:
+                # Save PAID status to database
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO payments (phone_number, status) VALUES (?, ?)",
+                    (sender_phone, 'PAID')
+                )
+                conn.commit()
+                conn.close()
+                resp.message('Thank you! Payment verified.')
+                logging.info(f"Payment PAID recorded for {sender_phone}")
+            except sqlite3.Error as e:
+                logging.error(f"Database error while saving PAID status: {e}")
+                resp.message('System error. Please try again later.')
+            
+        elif incoming_msg.upper() == 'NO':
+            try:
+                # Save NOT_PAID status to database
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO payments (phone_number, status) VALUES (?, ?)",
+                    (sender_phone, 'NOT_PAID')
+                )
+                conn.commit()
+                conn.close()
+                resp.message('Alert: Non-payment recorded.')
+                logging.info(f"Payment NOT_PAID recorded for {sender_phone}")
+            except sqlite3.Error as e:
+                logging.error(f"Database error while saving NOT_PAID status: {e}")
+                resp.message('System error. Please try again later.')
+            
+        else:
+            # Invalid response - request YES or NO
+            resp.message('Please reply with YES or NO.')
+            logging.warning(f"Invalid response from {sender_phone}: {incoming_msg}")
+        
+        return str(resp)
+        
+    except Exception as e:
+        logging.error(f"Unexpected error in SMS handler: {e}")
+        resp = MessagingResponse()
+        resp.message('System error. Please contact support.')
+        return str(resp)
+
+
 # ==================== Dashboard Route ====================
 
 @app.route('/dashboard')
@@ -214,59 +308,7 @@ def export_csv():
     except Exception as e:
         logging.error(f"Error exporting CSV: {e}")
         flash('Error exporting data.', 'danger')
-        return redirect(url_for('dashboard')
-                resp.message('Thank you! Payment verified.')
-                logging.info(f"Payment PAID recorded for {sender_phone}")
-            except sqlite3.Error as e:
-                logging.error(f"Database error while saving PAID status: {e}")
-                resp.message('System error. Please try again later.')
-            
-        elif incoming_msg.upper() == 'NO':
-            try:
-                # Save NOT_PAID status to database
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    "INSERT INTO payments (phone_number, status) VALUES (?, ?)",
-                    (sender_phone, 'NOT_PAID')
-                )
-                conn.commit()
-                conn.close()
-                resp.message('Alert: Non-payment recorded.')
-                logging.info(f"Payment NOT_PAID recorded for {sender_phone}")
-            except sqlite3.Error as e:
-                logging.error(f"Database error while saving NOT_PAID status: {e}")
-                resp.message('System error. Please try again later.')
-            
-        else:
-            # Invalid response - request YES or NO
-            resp.message('Please reply with YES or NO.')
-            logging.warning(f"Invalid response from {sender_phone}: {incoming_msg}")
-        
-        return str(resp)
-        
-    except Exception as e:
-        logging.error(f"Unexpected error in SMS handler: {e}")
-        resp = MessagingResponse()
-        resp.message('System error. Please contact support.')
-        return str(resp)
-
-
-@app.route('/dashboard')
-def dashboard():
-    """Display payment records in a web dashboard."""
-    # Fetch all payment records from database
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM payments ORDER BY timestamp DESC")
-    rows = cursor.fetchall()
-    conn.close()
-
-    # Convert rows to list of dictionaries for template
-    rows_list = [dict(row) for row in rows]
-
-    # Render the dashboard template
-    return render_template('dashboard.html', rows=rows_list)
+        return redirect(url_for('dashboard'))
 
 
 # ==================== Run Application ====================
