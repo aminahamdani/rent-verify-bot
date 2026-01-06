@@ -1,0 +1,80 @@
+/* ================================================ */
+/* Custom Styles for RentVerify Dashboard          */
+/* Bootstrap 5 handles most styling                */
+/* ================================================ */
+
+/* Soft Background Color */
+body {
+    background-color: #f5f7fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Card Hover Effects */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Statistics Card Enhancements */
+.card-body i {
+    transition: transform 0.3s ease;
+}
+
+.card:hover i {
+    transform: scale(1.1);
+}
+
+/* Table Row Hover Enhancement */
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+/* Badge Styling Enhancement */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+/* Phone Number Styling */
+.font-monospace {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Custom Card Header */
+.card-header {
+    font-weight: 600;
+    border-bottom: none;
+}
+
+/* Empty State Icon */
+.bi-inbox {
+    opacity: 0.3;
+}
+
+/* Smooth Animations */
+* {
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Table Striping (Optional) */
+.table tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Responsive Spacing */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
