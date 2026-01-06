@@ -33,13 +33,19 @@
 
 ## Project Structure
 
-| File | Description |
-|------|-------------|
-| `app.py` | Main Flask application with `/sms` webhook and `/dashboard` route |
-| `send_test.py` | Script to send test SMS messages |
-| `.env` | Environment variables (API credentials) |
-| `.gitignore` | Excludes sensitive files from version control |
-| `rent_data.db` | SQLite database (auto-created on first run) |
+```
+RentVerify/
+├── 📄 app.py                      # Main Flask application
+├── 📄 requirements.txt            # Python dependencies
+├── 📄 Procfile                    # Production server command
+├── 📄 runtime.txt                 # Python version (3.11.7)
+├── 📁 templates/                  # HTML templates (login, dashboard)
+├── 📁 static/                     # CSS, JS, images
+├── 📁 instance/                   # Database storage (auto-created)
+└── 📄 .env                        # Environment variables (not in Git)
+```
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for complete file descriptions.
 
 ---
 
@@ -130,13 +136,142 @@ All sensitive data (Twilio SID, Auth Token) is loaded from environment variables
 
 ---
 
+## Dashboard Overview
+
+Visit `/dashboard` to view all payment records:
+
+| Feature | Description |
+|---------|-------------|
+| **View Records** | See all payment responses with timestamps |
+| **Summary Stats** | Total PAID vs NOT_PAID counts |
+| **Export CSV** | Download all records for analysis |
+| **Secure Login** | Password-protected admin access |
+
+**Dashboard URL:** `http://localhost:5000/dashboard` (local) or `https://your-app.onrender.com/dashboard` (production)
+
+---
+
+## 🚀 Production Deployment
+
+### Quick Deploy (Render or Railway)
+
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Ready for deployment"
+   git push origin main
+   ```
+
+2. **Deploy on Render**
+   - Go to https://render.com/
+   - New Web Service → Connect GitHub repo
+   - Build: `pip install -r requirements.txt`
+   - Start: Uses `Procfile` automatically
+
+3. **Set Environment Variables**
+   ```env
+   SECRET_KEY=your-64-char-secret-key
+   FLASK_ENV=production
+   ADMIN_USERNAME=your_username
+   ADMIN_PASSWORD=your_password
+   TWILIO_ACCOUNT_SID=ACxxxxx...
+   TWILIO_AUTH_TOKEN=your_token
+   TWILIO_PHONE_NUMBER=+1234567890
+   ```
+
+4. **Configure Twilio Webhook**
+   - Webhook URL: `https://your-app.onrender.com/sms`
+   - Method: POST
+
+### Generate SECRET_KEY
+```powershell
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### Deployment Files
+
+✅ **Procfile** (production server)
+```
+web: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60 --log-level info
+```
+
+✅ **runtime.txt** (Python version)
+```
+python-3.11.7
+```
+
+✅ **requirements.txt** (dependencies)
+```
+Flask==3.0.0
+twilio==8.10.0
+python-dotenv==1.0.0
+gunicorn==21.2.0
+Werkzeug==3.0.1
+```
+
+### Complete Deployment Guide
+See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step instructions.
+
+---
+
+## 📚 Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [README.md](README.md) | Project overview and setup |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Complete deployment guide |
+| [DEPLOYMENT_QUICK.md](DEPLOYMENT_QUICK.md) | Quick reference card |
+| [TESTING_GUIDE.md](TESTING_GUIDE.md) | SMS testing instructions |
+| [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | File structure diagram |
+
+---
+
+## 🔒 Security Features
+
+- ✅ Password hashing with Werkzeug
+- ✅ Session-based authentication
+- ✅ Secure cookie configuration
+- ✅ Environment variable protection
+- ✅ SQL injection prevention (parameterized queries)
+- ✅ HTTPS enforced in production
+
+---
+
 ## Roadmap
 
-- [ ] Add tenant name field to database
-- [ ] Export payment records to CSV
+- [x] Add tenant name field to database
+- [x] Export payment records to CSV ✅
 - [ ] Email notifications for non-payments
 - [ ] Multi-tenant support with unique links
-- [ ] Deploy to Heroku/Railway/Render
+- [x] Deploy to Heroku/Railway/Render ✅
+
+---
+
+## 💰 Costs
+
+**Free Tier Options:**
+- Render: 750 hours/month free (sleeps after 15 min)
+- Railway: $5 free credit/month
+- Twilio: Free trial + ~$0.0075/SMS
+
+**Total:** $0-20/month depending on usage
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+---
+
+## 📧 Support
+
+- **Issues:** Open a GitHub issue
+- **Twilio Docs:** https://www.twilio.com/docs/sms
+- **Flask Docs:** https://flask.palletsprojects.com/
 
 ---
 
@@ -147,3 +282,5 @@ MIT (placeholder — update as needed)
 ---
 
 **Built with ❤️ for landlords who value automation**
+
+**Live Demo:** [Your deployed URL here]

@@ -27,3 +27,10 @@ env/
 .idea/
 *.swp
 *.swo
+
+# Test scripts (do not deploy)
+send_test.py
+
+# OS files
+.DS_Store
+Thumbs.db
