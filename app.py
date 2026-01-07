@@ -260,23 +260,30 @@ def dashboard():
         cursor.execute("SELECT * FROM payments ORDER BY timestamp DESC")
         rows = cursor.fetchall()
         
+        # Convert rows to list of dictionaries and transform for template
+        messages = []
+        for row in rows:
+            messages.append({
+                'phone': row['phone_number'],
+                'body': f"Payment status: {row['status']}",
+                'status': 'YES' if row['status'] == 'PAID' else 'NO',
+                'timestamp': row['timestamp']
+            })
+        
         # Calculate summary counts
-        cursor.execute("SELECT COUNT(*) FROM payments WHERE status = 'PAID'")
-        paid_count = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(*) FROM payments WHERE status = 'NOT_PAID'")
-        not_paid_count = cursor.fetchone()[0]
-        
-        # Convert rows to list of dictionaries for template
-        rows_list = [dict(row) for row in rows]
+        total_messages = len(messages)
+        yes_count = sum(1 for msg in messages if msg['status'] == 'YES')
+        no_count = sum(1 for msg in messages if msg['status'] == 'NO')
+        pending_count = total_messages - yes_count - no_count
         
         # Render the dashboard template with summary data
         return render_template(
             'dashboard.html',
-            rows=rows_list,
-            paid_count=paid_count,
-            not_paid_count=not_paid_count,
-            total_count=len(rows_list)
+            messages=messages,
+            total_messages=total_messages,
+            yes_count=yes_count,
+            no_count=no_count,
+            pending_count=pending_count
         )
         
     except Exception as e:
