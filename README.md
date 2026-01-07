@@ -283,4 +283,10 @@ MIT (placeholder — update as needed)
 
 **Built with ❤️ for landlords who value automation**
 
-**Live Demo:** [Your deployed URL here]
+---
+
+## 🌐 Live Demo
+Try the app here: https://rentverify.onrender.com
+
+### 📱 Scan to Open
+![QR Code](assets/qr_rentverify.png)
