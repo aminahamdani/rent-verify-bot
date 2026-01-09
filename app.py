@@ -177,71 +177,23 @@ def index():
 
 # ==================== SMS Webhook Route ====================
 
-@app.route('/sms', methods=['POST'])
+@app.route("/sms", methods=["POST"])
 def sms_reply():
-    """Handle incoming SMS messages from Twilio webhook."""
-    conn = None
-    try:
-        # Get the incoming message and sender's phone number
-        incoming_msg = request.form.get('Body', '').strip()
-        sender_phone = request.form.get('From', '')
-        
-        logger.info(f"Received SMS from {sender_phone}: {incoming_msg}")
-        
-        # Create Twilio response object
-        resp = MessagingResponse()
-        
-        # Validate and process the message
-        if incoming_msg.upper() == 'YES':
-            try:
-                # Save PAID status to database
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    "INSERT INTO payments (phone_number, status) VALUES (?, ?)",
-                    (sender_phone, 'PAID')
-                )
-                conn.commit()
-                resp.message('Thank you! Payment verified.')
-                logger.info(f"Payment PAID recorded for {sender_phone}")
-            except sqlite3.Error as e:
-                logger.error(f"Database error while saving PAID status: {e}")
-                resp.message('System error. Please try again later.')
-            finally:
-                if conn:
-                    conn.close()
-            
-        elif incoming_msg.upper() == 'NO':
-            try:
-                # Save NOT_PAID status to database
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    "INSERT INTO payments (phone_number, status) VALUES (?, ?)",
-                    (sender_phone, 'NOT_PAID')
-                )
-                conn.commit()
-                resp.message('Alert: Non-payment recorded.')
-                logger.info(f"Payment NOT_PAID recorded for {sender_phone}")
-            except sqlite3.Error as e:
-                logger.error(f"Database error while saving NOT_PAID status: {e}")
-                resp.message('System error. Please try again later.')
-            finally:
-                if conn:
-                    conn.close()
-            
-        else:
-            # Invalid response - request YES or NO
-            resp.message('Please reply with YES or NO.')
-            logger.warning(f"Invalid response from {sender_phone}: {incoming_msg}")
-        
-        return str(resp)
-        
-    except Exception as e:
-        logger.error(f"Unexpected error in SMS handler: {e}")
-        resp = MessagingResponse()
-        resp.message('System error. Please contact support.')
-        return str(resp)
+    from flask import request
+    import sqlite3
+    from datetime import datetime
+
+    phone_number = request.form.get("From")
+    reply = request.form.get("Body")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    conn = sqlite3.connect("rent_data.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO rent_records (phone_number, reply, timestamp) VALUES (?, ?, ?)", (phone_number, reply, timestamp))
+    conn.commit()
+    conn.close()
+
+    return "Reply recorded", 200
 
 
 # ==================== Dashboard Route ====================
