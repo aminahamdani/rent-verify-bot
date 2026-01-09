@@ -206,10 +206,11 @@ def dashboard():
     try:
         logger.info(f"Dashboard accessed by user: {session.get('username', 'Unknown')}")
         
-        # Fetch all payment records from database
-        conn = get_db_connection()
+        # Fetch all records from rent_records database
+        conn = sqlite3.connect("rent_data.db")
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM payments ORDER BY timestamp DESC")
+        cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
         rows = cursor.fetchall()
         
         # Convert rows to list of dictionaries and transform for template
@@ -217,8 +218,8 @@ def dashboard():
         for row in rows:
             messages.append({
                 'phone': row['phone_number'],
-                'body': f"Payment status: {row['status']}",
-                'status': 'YES' if row['status'] == 'PAID' else 'NO',
+                'body': row['reply'],
+                'status': row['reply'].upper(),
                 'timestamp': row['timestamp']
             })
         
@@ -257,10 +258,11 @@ def export_csv():
     try:
         logger.info(f"CSV export initiated by user: {session.get('username', 'Unknown')}")
         
-        # Fetch all payment records
-        conn = get_db_connection()
+        # Fetch all records from rent_records
+        conn = sqlite3.connect("rent_data.db")
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM payments ORDER BY timestamp DESC")
+        cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
         rows = cursor.fetchall()
         
         # Create CSV in memory
@@ -268,11 +270,11 @@ def export_csv():
         writer = csv.writer(si)
         
         # Write header
-        writer.writerow(['ID', 'Phone Number', 'Status', 'Timestamp'])
+        writer.writerow(['Phone Number', 'Reply', 'Timestamp'])
         
         # Write data rows
         for row in rows:
-            writer.writerow([row['id'], row['phone_number'], row['status'], row['timestamp']])
+            writer.writerow([row['phone_number'], row['reply'], row['timestamp']])
         
         # Create response
         output = make_response(si.getvalue())
