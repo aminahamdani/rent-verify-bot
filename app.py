@@ -1,6 +1,7 @@
 import os
 import csv
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import logging
 import sys
 from io import StringIO
@@ -70,19 +71,21 @@ ADMIN_PASSWORD_HASH = generate_password_hash(ADMIN_PASSWORD)
 # Ensure the instance folder exists
 os.makedirs(app.instance_path, exist_ok=True)
 
-# Database path in instance folder
-DATABASE_PATH = os.path.join(app.instance_path, 'rent_data.db')
+# Database connection URL from environment (PostgreSQL on Render)
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+    logger.error("DATABASE_URL not found in environment variables!")
+    raise ValueError("DATABASE_URL must be set in environment variables")
 
 
 # ==================== Database Functions ====================
 
 def get_db_connection():
-    """Create and return a database connection."""
+    """Create and return a PostgreSQL database connection."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
-        conn.row_factory = sqlite3.Row  # Enable column access by name
+        conn = psycopg2.connect(DATABASE_URL)
         return conn
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"Database connection error: {e}")
         raise
 
@@ -95,10 +98,10 @@ def init_db():
         cursor = conn.cursor()
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS payments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 phone_number TEXT NOT NULL,
                 status TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         cursor.execute('''
@@ -110,8 +113,10 @@ def init_db():
         ''')
         conn.commit()
         logger.info("Database initialized successfully")
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"Database initialization error: {e}")
+        if conn:
+            conn.rollback()
         raise
     finally:
         if conn:
@@ -195,9 +200,9 @@ def sms_reply():
         
         logger.info(f"Received SMS from {phone_number}: {reply}")
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO rent_records (phone_number, reply, timestamp) VALUES (?, ?, ?)", (phone_number, reply, timestamp))
+        cursor.execute("INSERT INTO rent_records (phone_number, reply, timestamp) VALUES (%s, %s, %s)", (phone_number, reply, timestamp))
         conn.commit()
         
         logger.info(f"Message recorded in database for {phone_number}")
@@ -222,9 +227,8 @@ def dashboard():
         logger.info(f"Dashboard accessed by user: {session.get('username', 'Unknown')}")
         
         # Fetch all records from rent_records database
-        conn = sqlite3.connect(DATABASE_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
         rows = cursor.fetchall()
         
@@ -276,9 +280,8 @@ def export_csv():
         logger.info(f"CSV export initiated by user: {session.get('username', 'Unknown')}")
         
         # Fetch all records from rent_records
-        conn = sqlite3.connect(DATABASE_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
         rows = cursor.fetchall()
         
