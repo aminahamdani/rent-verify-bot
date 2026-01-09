@@ -5,6 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RentVerify Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        .flash-messages {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .flash-message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .flash-message.success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .flash-message.danger {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        .flash-message.warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        .flash-message.info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+        .flash-message .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            padding: 0;
+            margin-left: 15px;
+        }
+        .flash-message .close-btn:hover {
+            opacity: 1;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .refresh-indicator {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            padding: 10px;
+            background: #fff;
+            border-radius: 6px;
+            margin: 10px auto;
+            max-width: 300px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
 
 <body>
@@ -17,6 +88,22 @@
             <a href="{{ url_for('logout') }}" class="btn btn-logout">🚪 Logout</a>
         </div>
     </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="refresh-indicator">🔄 Auto-refreshing every 30 seconds</div>
 
     <section class="summary-cards">
         <div class="card total">Total Messages: {{ total_messages }}</div>
@@ -56,6 +143,27 @@
             </tbody>
         </table>
     </section>
+
+    <script>
+        // Auto-refresh the dashboard every 30 seconds
+        setTimeout(function() {
+            location.reload();
+        }, 30000); // 30 seconds
+
+        // Auto-hide flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(msg) {
+                setTimeout(function() {
+                    msg.style.transition = 'opacity 0.5s ease-out';
+                    msg.style.opacity = '0';
+                    setTimeout(function() {
+                        msg.style.display = 'none';
+                    }, 500);
+                }, 5000); // Hide after 5 seconds
+            });
+        });
+    </script>
 
 </body>
 </html>
