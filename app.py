@@ -101,6 +101,13 @@ def init_db():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS rent_records (
+                phone_number TEXT,
+                reply TEXT,
+                timestamp TEXT
+            )
+        ''')
         conn.commit()
         logger.info("Database initialized successfully")
     except sqlite3.Error as e:
@@ -179,21 +186,29 @@ def index():
 
 @app.route("/sms", methods=["POST"])
 def sms_reply():
-    from flask import request
-    import sqlite3
-    from datetime import datetime
+    """Handle incoming SMS messages from Twilio webhook."""
+    conn = None
+    try:
+        phone_number = request.form.get("From")
+        reply = request.form.get("Body")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        logger.info(f"Received SMS from {phone_number}: {reply}")
 
-    phone_number = request.form.get("From")
-    reply = request.form.get("Body")
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    conn = sqlite3.connect("rent_data.db")
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO rent_records (phone_number, reply, timestamp) VALUES (?, ?, ?)", (phone_number, reply, timestamp))
-    conn.commit()
-    conn.close()
-
-    return "Reply recorded", 200
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO rent_records (phone_number, reply, timestamp) VALUES (?, ?, ?)", (phone_number, reply, timestamp))
+        conn.commit()
+        
+        logger.info(f"Message recorded in database for {phone_number}")
+        return "Reply recorded", 200
+        
+    except Exception as e:
+        logger.error(f"Error in SMS handler: {e}")
+        return "Error processing message", 500
+    finally:
+        if conn:
+            conn.close()
 
 
 # ==================== Dashboard Route ====================
@@ -207,11 +222,13 @@ def dashboard():
         logger.info(f"Dashboard accessed by user: {session.get('username', 'Unknown')}")
         
         # Fetch all records from rent_records database
-        conn = sqlite3.connect("rent_data.db")
+        conn = sqlite3.connect(DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
         rows = cursor.fetchall()
+        
+        logger.info(f"Retrieved {len(rows)} messages from database")
         
         # Convert rows to list of dictionaries and transform for template
         messages = []
@@ -259,7 +276,7 @@ def export_csv():
         logger.info(f"CSV export initiated by user: {session.get('username', 'Unknown')}")
         
         # Fetch all records from rent_records
-        conn = sqlite3.connect("rent_data.db")
+        conn = sqlite3.connect(DATABASE_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
