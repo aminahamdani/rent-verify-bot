@@ -286,7 +286,7 @@ MIT (placeholder — update as needed)
 ---
 
 ## 🌐 Live Demo
-Try the app here: https://rentverify.onrender.com
+Try the app here: https://rent-verify-bot.onrender.com
 
 ### 📱 Scan to Open
-![QR Code](assets/qr_rentverify.png)
+![QR Code](assets/qr_rent-verify-bot.png)
