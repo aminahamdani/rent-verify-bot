@@ -12,6 +12,10 @@
     <header class="dashboard-header">
         <h1>RentVerify Dashboard</h1>
         <p>Track tenant SMS confirmations in real time</p>
+        <div class="header-actions">
+            <a href="{{ url_for('export_csv') }}" class="btn btn-export">📥 Download CSV</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-logout">🚪 Logout</a>
+        </div>
     </header>
 
     <section class="summary-cards">
@@ -22,6 +26,7 @@
     </section>
 
     <section class="table-section">
+        <h2>Recent Messages (Newest First)</h2>
         <table>
             <thead>
                 <tr>

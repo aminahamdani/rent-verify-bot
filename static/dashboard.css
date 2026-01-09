@@ -10,6 +10,46 @@ body {
     padding: 30px 20px;
     background: #4a90e2;
     color: white;
+    position: relative;
+}
+
+.header-actions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.btn-export {
+    background: #28a745;
+    color: white;
+}
+
+.btn-export:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-logout {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-logout:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .summary-cards {
@@ -38,6 +78,13 @@ body {
 .table-section {
     max-width: 1000px;
     margin: 30px auto;
+    padding: 0 20px;
+}
+
+.table-section h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
 }
 
 table {

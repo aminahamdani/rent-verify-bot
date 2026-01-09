@@ -2,6 +2,7 @@ import os
 import csv
 import psycopg2
 import psycopg2.extras
+from psycopg2 import pool
 import logging
 import sys
 from io import StringIO
@@ -77,17 +78,35 @@ if not DATABASE_URL:
     logger.error("DATABASE_URL not found in environment variables!")
     raise ValueError("DATABASE_URL must be set in environment variables")
 
+# Initialize connection pool for better performance
+try:
+    connection_pool = pool.SimpleConnectionPool(
+        minconn=1,
+        maxconn=10,
+        dsn=DATABASE_URL
+    )
+    if connection_pool:
+        logger.info("Connection pool created successfully")
+except psycopg2.Error as e:
+    logger.error(f"Error creating connection pool: {e}")
+    raise
+
 
 # ==================== Database Functions ====================
 
 def get_db_connection():
-    """Create and return a PostgreSQL database connection."""
+    """Get a connection from the pool."""
     try:
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = connection_pool.getconn()
         return conn
     except psycopg2.Error as e:
         logger.error(f"Database connection error: {e}")
         raise
+
+def return_db_connection(conn):
+    """Return a connection to the pool."""
+    if conn:
+        connection_pool.putconn(conn)
 
 
 def init_db():
@@ -119,8 +138,7 @@ def init_db():
             conn.rollback()
         raise
     finally:
-        if conn:
-            conn.close()
+        return_db_connection(conn)
 
 
 # Initialize the database on startup
@@ -212,8 +230,7 @@ def sms_reply():
         logger.error(f"Error in SMS handler: {e}")
         return "Error processing message", 500
     finally:
-        if conn:
-            conn.close()
+        return_db_connection(conn)
 
 
 # ==================== Dashboard Route ====================
@@ -265,8 +282,7 @@ def dashboard():
         flash('Error loading dashboard data.', 'danger')
         return render_template('dashboard.html', rows=[], paid_count=0, not_paid_count=0, total_count=0)
     finally:
-        if conn:
-            conn.close()
+        return_db_connection(conn)
 
 
 # ==================== CSV Export Route ====================
@@ -309,8 +325,7 @@ def export_csv():
         flash('Error exporting data.', 'danger')
         return redirect(url_for('dashboard'))
     finally:
-        if conn:
-            conn.close()
+        return_db_connection(conn)
 
 
 # ==================== Run Application ====================

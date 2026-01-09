@@ -7,6 +7,10 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Alembic
+*.pyc
+__pycache__/
+
 # Flask instance folder (contains database)
 instance/
 
