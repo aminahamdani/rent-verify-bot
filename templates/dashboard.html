@@ -126,7 +126,21 @@
             <tbody>
                 {% for msg in messages %}
                 <tr>
-                    <td>{{ msg.phone }}</td>
+                    <td>
+                        {% set phone = msg.phone | string %}
+                        {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
+                        {% set digits_only = [] %}
+                        {% for char in cleaned %}
+                            {% if char.isdigit() %}
+                                {% set _ = digits_only.append(char) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if digits_only | length >= 4 %}
+                            ******{{ digits_only[-4:] | join('') }}
+                        {% else %}
+                            Unknown
+                        {% endif %}
+                    </td>
                     <td>{{ msg.body }}</td>
                     <td>
                         {% if msg.status == 'YES' %}
