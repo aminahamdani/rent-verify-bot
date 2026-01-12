@@ -145,6 +145,30 @@ def init_db():
 init_db()
 
 
+# ==================== Phone Number Masking ====================
+
+def mask_phone_number(phone_number):
+    """Mask phone number, showing only last 4 digits.
+    
+    Args:
+        phone_number (str): The phone number to mask (e.g., '+12345679380')
+    
+    Returns:
+        str: Masked phone number (e.g., '******9380')
+    """
+    if not phone_number:
+        return '******0000'
+    
+    # Remove any non-digit characters except '+'
+    cleaned = ''.join(c for c in phone_number if c.isdigit())
+    
+    # Get last 4 digits
+    last_four = cleaned[-4:] if len(cleaned) >= 4 else cleaned.zfill(4)
+    
+    # Return masked format
+    return f"******{last_four}"
+
+
 # ==================== Authentication Decorator ====================
 
 def login_required(f):
@@ -212,18 +236,24 @@ def sms_reply():
     """Handle incoming SMS messages from Twilio webhook."""
     conn = None
     try:
-        phone_number = request.form.get("From")
+        # Capture raw phone number from Twilio
+        raw_phone_number = request.form.get("From")
         reply = request.form.get("Body")
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        logger.info(f"Received SMS from {phone_number}: {reply}")
+        # Mask the phone number immediately
+        masked_phone = mask_phone_number(raw_phone_number)
+        
+        # Log only the masked version
+        logger.info(f"Received SMS from {masked_phone}: {reply}")
 
+        # Save only the masked phone number to database
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO rent_records (phone_number, reply, timestamp) VALUES (%s, %s, %s)", (phone_number, reply, timestamp))
+        cursor.execute("INSERT INTO rent_records (phone_number, reply, timestamp) VALUES (%s, %s, %s)", (masked_phone, reply, timestamp))
         conn.commit()
         
-        logger.info(f"Message recorded in database for {phone_number}")
+        logger.info(f"Message recorded in database for {masked_phone}")
         return "Reply recorded", 200
         
     except Exception as e:
@@ -252,10 +282,19 @@ def dashboard():
         logger.info(f"Retrieved {len(rows)} messages from database")
         
         # Convert rows to list of dictionaries and transform for template
+        # Mask phone numbers at display time (handles both new masked and old unmasked numbers)
         messages = []
         for row in rows:
+            # Get phone number and ensure it's masked
+            phone_from_db = row['phone_number']
+            # If already masked (starts with ******), use as-is; otherwise mask it
+            if phone_from_db and phone_from_db.startswith('******'):
+                masked_phone = phone_from_db
+            else:
+                masked_phone = mask_phone_number(phone_from_db)
+            
             messages.append({
-                'phone': row['phone_number'],
+                'phone': masked_phone,
                 'body': row['reply'],
                 'status': row['reply'].upper(),
                 'timestamp': row['timestamp']
@@ -308,9 +347,15 @@ def export_csv():
         # Write header
         writer.writerow(['Phone Number', 'Reply', 'Timestamp'])
         
-        # Write data rows
+        # Write data rows with masked phone numbers
         for row in rows:
-            writer.writerow([row['phone_number'], row['reply'], row['timestamp']])
+            phone_from_db = row['phone_number']
+            # If already masked (starts with ******), use as-is; otherwise mask it
+            if phone_from_db and phone_from_db.startswith('******'):
+                masked_phone = phone_from_db
+            else:
+                masked_phone = mask_phone_number(phone_from_db)
+            writer.writerow([masked_phone, row['reply'], row['timestamp']])
         
         # Create response
         output = make_response(si.getvalue())
