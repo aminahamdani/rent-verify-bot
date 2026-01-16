@@ -313,6 +313,8 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for complete step-by-step instructions.
 | [README.md](README.md) | Project overview and setup (you are here) |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Complete production deployment guide |
 | [DEPLOYMENT_QUICK.md](DEPLOYMENT_QUICK.md) | Quick reference for deployment |
+| [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) | Complete Azure App Service deployment guide |
+| [AZURE_DEPLOY_QUICK.md](AZURE_DEPLOY_QUICK.md) | Quick Azure deployment reference |
 | [LOCAL_SETUP.md](LOCAL_SETUP.md) | Detailed local development setup |
 | [TESTING_GUIDE.md](TESTING_GUIDE.md) | SMS testing and webhook validation |
 | [MIGRATIONS.md](MIGRATIONS.md) | Database migration instructions |
