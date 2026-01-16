@@ -11,9 +11,6 @@ from flask import Flask
 from dotenv import load_dotenv
 
 def create_app():
-        # Register error handlers
-        from utils.error_handlers import register_error_handlers
-        register_error_handlers(app)
     """
     Application factory for RentVerify.
     Initializes Flask, loads config, and registers blueprints.
@@ -38,6 +35,10 @@ def create_app():
 
     # Initialize Flask app
     app = Flask(__name__, instance_relative_config=True)
+
+    # Register error handlers
+    from utils.error_handlers import register_error_handlers
+    register_error_handlers(app)
 
     # Secret key configuration
     SECRET_KEY = os.getenv('SECRET_KEY')
