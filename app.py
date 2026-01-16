@@ -1,11 +1,10 @@
-import os
-import csv
-
 # app.py - Application Factory for RentVerify
 
 import os
 import sys
 import logging
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from pathlib import Path
 from flask import Flask
 from dotenv import load_dotenv
@@ -56,6 +55,45 @@ def create_app():
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
+    # Database configuration
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    if not DATABASE_URL:
+        logger.warning("DATABASE_URL not found - database features may not work")
+    else:
+        logger.info("DATABASE_URL found - PostgreSQL mode enabled")
+        # Initialize database tables
+        try:
+            init_database(DATABASE_URL, logger)
+        except Exception as e:
+            logger.error(f"Database initialization error: {e}")
+            # Continue anyway - tables might already exist
+
+    # Database connection functions
+    def get_db_connection():
+        """Get PostgreSQL database connection."""
+        db_url = os.getenv('DATABASE_URL')
+        if not db_url:
+            raise ValueError("DATABASE_URL not set")
+        conn = psycopg2.connect(db_url)
+        return conn
+
+    def return_db_connection(conn):
+        """Return connection to pool (close for PostgreSQL)."""
+        if conn:
+            conn.close()
+
+    def mask_phone_number(phone_number):
+        """Mask phone number for privacy (show last 4 digits)."""
+        if not phone_number or len(phone_number) < 4:
+            return phone_number
+        return '******' + phone_number[-4:]
+
+    # Make functions available to app and blueprints
+    app.get_db_connection = get_db_connection
+    app.return_db_connection = return_db_connection
+    app.mask_phone_number = mask_phone_number
+    app.logger = logger
+
     # Register blueprints
     from routes.sms import sms_bp
     from routes.dashboard import dashboard_bp
@@ -83,6 +121,9 @@ def create_app():
             return f(*args, **kwargs)
         return decorated_function
     app.login_required = login_required
+
+    # Make logger available globally
+    app.logger_instance = logger
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
@@ -119,8 +160,51 @@ def create_app():
 
     return app
 
+
+def init_database(database_url, logger):
+    """Initialize PostgreSQL database tables if they don't exist."""
+    try:
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+        
+        # Create rent_records table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS rent_records (
+                id SERIAL PRIMARY KEY,
+                phone_number TEXT NOT NULL,
+                reply TEXT NOT NULL,
+                timestamp TEXT NOT NULL
+            )
+        ''')
+        
+        # Create payments table (if needed)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS payments (
+                id SERIAL PRIMARY KEY,
+                phone_number TEXT NOT NULL,
+                status TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        logger.info("Database tables initialized successfully")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+        raise
+
+
 # For flask run compatibility
 app = create_app()
+
+# Make functions available at module level for imports
+get_db_connection = app.get_db_connection
+return_db_connection = app.return_db_connection
+mask_phone_number = app.mask_phone_number
+login_required = app.login_required
+logger = app.logger_instance
 
 # For direct execution
 if __name__ == '__main__':

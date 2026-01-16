@@ -37,11 +37,16 @@
 
 ---
 
-## Project Structure
+## Project Structure (2026)
+
+The project now uses modular blueprints, a service layer, centralized error handling, and explicit input validation contracts.
+
+See [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) for a step-by-step development history.
 
 ```
 RentVerify/
-├── 📄 app.py                      # Main Flask application with auth & masking
+├── 📄 app.py                      # Application factory, blueprint registration
+├── 📄 app_local.py                # Local development entry point
 ├── 📄 requirements.txt            # Python dependencies
 ├── 📄 Procfile                    # Production server (gunicorn)
 ├── 📄 runtime.txt                 # Python version (3.11.7)
@@ -57,10 +62,21 @@ RentVerify/
 │   ├── login.css
 │   ├── dashboard.css
 │   └── styles.css
+├── 📁 routes/                     # Modular route blueprints
+│   ├── sms.py                    # SMS webhook blueprint (input validation)
+│   ├── dashboard.py              # Dashboard blueprint (input validation)
+│   └── __init__.py               # Route package initializer
+├── 📁 services/                  # Business logic layer
+│   ├── twilio_service.py         # SMS processing logic
+│   └── db_service.py             # DB connection logic
+├── 📁 utils/                     # Utilities
+│   ├── error_handlers.py         # Centralized error handling
+│   └── validators.py             # Input validation contracts
 └── 📄 .env                        # Environment variables (not in Git)
 ```
 
 See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for complete file descriptions.
+See [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) for a chronological log of development steps.
 
 ---
 
@@ -302,6 +318,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for complete step-by-step instructions.
 | [MIGRATIONS.md](MIGRATIONS.md) | Database migration instructions |
 | [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | Complete file structure reference |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common issues and solutions |
+| [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) | Chronological log of development steps |
 
 ---
 

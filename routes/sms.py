@@ -56,8 +56,12 @@ def sms_reply():
         # Lazy import for environment-specific helpers
         try:
             from app import mask_phone_number, logger
-        except Exception:
-            from app_local import logger
+        except ImportError:
+            try:
+                from app_local import logger
+            except ImportError:
+                import logging
+                logger = logging.getLogger(__name__)
             def mask_phone_number(phone_number):
                 return phone_number
 

@@ -28,18 +28,27 @@ def dashboard():
     """Display payment records in a web dashboard (protected route)."""
     # Lazy import to avoid circular dependencies
     try:
-        from app import get_db_connection, mask_phone_number, logger, login_required, return_db_connection
+        from app import mask_phone_number, logger, login_required
         use_mask = True
-        is_local = False
     except ImportError:
-        from app_local import get_db_connection, logger, login_required
+        try:
+            from app_local import logger, login_required
+        except ImportError:
+            import logging
+            logger = logging.getLogger(__name__)
+            def login_required(f):
+                from functools import wraps
+                @wraps(f)
+                def decorated_function(*args, **kwargs):
+                    if 'logged_in' not in session:
+                        flash('Please log in to access this page.', 'warning')
+                        return redirect(url_for('login'))
+                    return f(*args, **kwargs)
+                return decorated_function
         use_mask = False
-        is_local = True
         def mask_phone_number(phone_number):
             return phone_number
-        def return_db_connection(conn):
-            if conn:
-                conn.close()
+    
     # Apply login protection
     @login_required
     def inner_dashboard():
@@ -53,20 +62,42 @@ def dashboard():
         try:
             logger.info(f"Dashboard accessed by user: {session.get('username', 'Unknown')}")
             conn = db_service.get_db_connection()
-            cursor = conn.cursor()
+            
+            # Use appropriate cursor based on database type
+            import os
+            DATABASE_URL = os.getenv('DATABASE_URL')
+            if DATABASE_URL:
+                # PostgreSQL
+                from psycopg2.extras import RealDictCursor
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+            else:
+                # SQLite - row_factory is set on connection, not cursor
+                cursor = conn.cursor()
+            
             cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
             rows = cursor.fetchall()
             db_service.close_db_connection(conn)
             logger.info(f"Retrieved {len(rows)} messages from database")
             messages = []
             for row in rows:
-                phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
-                messages.append({
-                    'phone': phone,
-                    'body': row['reply'],
-                    'status': row['reply'].upper(),
-                    'timestamp': row['timestamp']
-                })
+                # Handle both dict-like (PostgreSQL) and tuple-like (SQLite) rows
+                if isinstance(row, dict):
+                    phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
+                    messages.append({
+                        'phone': phone,
+                        'body': row['reply'],
+                        'status': row['reply'].upper(),
+                        'timestamp': row['timestamp']
+                    })
+                else:
+                    # SQLite Row object
+                    phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
+                    messages.append({
+                        'phone': phone,
+                        'body': row['reply'],
+                        'status': row['reply'].upper(),
+                        'timestamp': row['timestamp']
+                    })
             total_messages = len(messages)
             yes_count = sum(1 for msg in messages if msg['status'] == 'YES')
             no_count = sum(1 for msg in messages if msg['status'] == 'NO')
@@ -90,24 +121,44 @@ def dashboard():
 def export_csv():
     """Export all payment records to CSV (protected route)."""
     try:
-        from app import get_db_connection, mask_phone_number, logger, login_required, return_db_connection
+        from app import mask_phone_number, logger, login_required
         use_mask = True
-        is_local = False
     except ImportError:
-        from app_local import get_db_connection, logger, login_required
+        try:
+            from app_local import logger, login_required
+        except ImportError:
+            import logging
+            logger = logging.getLogger(__name__)
+            def login_required(f):
+                from functools import wraps
+                @wraps(f)
+                def decorated_function(*args, **kwargs):
+                    if 'logged_in' not in session:
+                        flash('Please log in to access this page.', 'warning')
+                        return redirect(url_for('login'))
+                    return f(*args, **kwargs)
+                return decorated_function
         use_mask = False
-        is_local = True
         def mask_phone_number(phone_number):
             return phone_number
-        def return_db_connection(conn):
-            if conn:
-                conn.close()
+    
     @login_required
     def inner_export_csv():
         try:
             logger.info(f"CSV export initiated by user: {session.get('username', 'Unknown')}")
             conn = db_service.get_db_connection()
-            cursor = conn.cursor()
+            
+            # Use appropriate cursor based on database type
+            import os
+            DATABASE_URL = os.getenv('DATABASE_URL')
+            if DATABASE_URL:
+                # PostgreSQL
+                from psycopg2.extras import RealDictCursor
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+            else:
+                # SQLite
+                cursor = conn.cursor()
+            
             cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
             rows = cursor.fetchall()
             db_service.close_db_connection(conn)
@@ -115,8 +166,13 @@ def export_csv():
             writer = csv.writer(si)
             writer.writerow(['Phone Number', 'Reply', 'Timestamp'])
             for row in rows:
-                phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
-                writer.writerow([phone, row['reply'], row['timestamp']])
+                # Handle both dict-like (PostgreSQL) and tuple-like (SQLite) rows
+                if isinstance(row, dict):
+                    phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
+                    writer.writerow([phone, row['reply'], row['timestamp']])
+                else:
+                    phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
+                    writer.writerow([phone, row['reply'], row['timestamp']])
             output = make_response(si.getvalue())
             output.headers["Content-Disposition"] = f"attachment; filename=payment_records_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             output.headers["Content-type"] = "text/csv"
