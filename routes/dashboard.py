@@ -82,8 +82,8 @@ def dashboard():
         except Exception as e:
             logger.error(f"Error loading dashboard: {e}")
             flash('Error loading dashboard data.', 'danger')
-                return render_template('dashboard.html', messages=[], total_messages=0, yes_count=0, no_count=0, pending_count=0)
-            return inner_dashboard()
+            return render_template('dashboard.html', messages=[], total_messages=0, yes_count=0, no_count=0, pending_count=0)
+    return inner_dashboard()
 
 # ==================== CSV Export Route ====================
 @dashboard_bp.route('/export')
