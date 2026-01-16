@@ -87,7 +87,7 @@ def create_app():
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if 'logged_in' in session:
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard.dashboard'))
         if request.method == 'POST':
             username = request.form.get('username', '').strip()
             password = request.form.get('password', '').strip()
@@ -97,7 +97,7 @@ def create_app():
                 session.permanent = True
                 flash('Login successful!', 'success')
                 logger.info(f"User '{username}' logged in successfully")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('dashboard.dashboard'))
             else:
                 flash('Invalid username or password.', 'danger')
                 logger.warning(f"Failed login attempt with username: {username}")
@@ -114,7 +114,7 @@ def create_app():
     @app.route('/')
     def index():
         if 'logged_in' in session:
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard.dashboard'))
         return redirect(url_for('login'))
 
     return app
