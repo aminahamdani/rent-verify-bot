@@ -173,8 +173,22 @@ def init_database(database_url, logger):
                 id SERIAL PRIMARY KEY,
                 phone_number TEXT NOT NULL,
                 reply TEXT NOT NULL,
-                timestamp TEXT NOT NULL
+                timestamp TEXT NOT NULL,
+                record_type TEXT DEFAULT 'tenant'
             )
+        ''')
+        
+        # Add record_type column if it doesn't exist (for existing databases)
+        cursor.execute('''
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='rent_records' AND column_name='record_type'
+                ) THEN
+                    ALTER TABLE rent_records ADD COLUMN record_type TEXT DEFAULT 'tenant';
+                END IF;
+            END $$;
         ''')
         
         # Create payments table (if needed)

@@ -78,37 +78,77 @@ def dashboard():
             rows = cursor.fetchall()
             db_service.close_db_connection(conn)
             logger.info(f"Retrieved {len(rows)} messages from database")
-            messages = []
+            
+            # Separate messages by type
+            tenant_messages = []
+            landlord_messages = []
+            all_messages = []
+            
             for row in rows:
                 # Handle both dict-like (PostgreSQL) and tuple-like (SQLite) rows
                 if isinstance(row, dict):
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
-                    messages.append({
+                    record_type = row.get('record_type', 'tenant')
+                    msg_data = {
                         'phone': phone,
                         'body': row['reply'],
                         'status': row['reply'].upper(),
-                        'timestamp': row['timestamp']
-                    })
+                        'timestamp': row['timestamp'],
+                        'type': record_type
+                    }
                 else:
                     # SQLite Row object
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
-                    messages.append({
+                    record_type = row.get('record_type', 'tenant') if hasattr(row, 'get') else 'tenant'
+                    msg_data = {
                         'phone': phone,
                         'body': row['reply'],
                         'status': row['reply'].upper(),
-                        'timestamp': row['timestamp']
-                    })
-            total_messages = len(messages)
-            yes_count = sum(1 for msg in messages if msg['status'] == 'YES')
-            no_count = sum(1 for msg in messages if msg['status'] == 'NO')
+                        'timestamp': row['timestamp'],
+                        'type': record_type
+                    }
+                
+                all_messages.append(msg_data)
+                if record_type == 'landlord':
+                    landlord_messages.append(msg_data)
+                else:
+                    tenant_messages.append(msg_data)
+            
+            # Calculate statistics
+            total_messages = len(all_messages)
+            yes_count = sum(1 for msg in all_messages if msg['status'] == 'YES')
+            no_count = sum(1 for msg in all_messages if msg['status'] == 'NO')
             pending_count = total_messages - yes_count - no_count
+            
+            # Tenant statistics
+            tenant_total = len(tenant_messages)
+            tenant_yes = sum(1 for msg in tenant_messages if msg['status'] == 'YES')
+            tenant_no = sum(1 for msg in tenant_messages if msg['status'] == 'NO')
+            tenant_pending = tenant_total - tenant_yes - tenant_no
+            
+            # Landlord statistics
+            landlord_total = len(landlord_messages)
+            landlord_yes = sum(1 for msg in landlord_messages if msg['status'] == 'YES')
+            landlord_no = sum(1 for msg in landlord_messages if msg['status'] == 'NO')
+            landlord_pending = landlord_total - landlord_yes - landlord_no
+            
             return render_template(
                 'dashboard.html',
-                messages=messages,
+                messages=all_messages,
+                tenant_messages=tenant_messages,
+                landlord_messages=landlord_messages,
                 total_messages=total_messages,
                 yes_count=yes_count,
                 no_count=no_count,
-                pending_count=pending_count
+                pending_count=pending_count,
+                tenant_total=tenant_total,
+                tenant_yes=tenant_yes,
+                tenant_no=tenant_no,
+                tenant_pending=tenant_pending,
+                landlord_total=landlord_total,
+                landlord_yes=landlord_yes,
+                landlord_no=landlord_no,
+                landlord_pending=landlord_pending
             )
         except Exception as e:
             logger.error(f"Error loading dashboard: {e}")
@@ -164,15 +204,17 @@ def export_csv():
             db_service.close_db_connection(conn)
             si = StringIO()
             writer = csv.writer(si)
-            writer.writerow(['Phone Number', 'Reply', 'Timestamp'])
+            writer.writerow(['Phone Number', 'Reply', 'Type', 'Timestamp'])
             for row in rows:
                 # Handle both dict-like (PostgreSQL) and tuple-like (SQLite) rows
                 if isinstance(row, dict):
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
-                    writer.writerow([phone, row['reply'], row['timestamp']])
+                    record_type = row.get('record_type', 'tenant')
+                    writer.writerow([phone, row['reply'], record_type, row['timestamp']])
                 else:
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
-                    writer.writerow([phone, row['reply'], row['timestamp']])
+                    record_type = row.get('record_type', 'tenant') if hasattr(row, 'get') else 'tenant'
+                    writer.writerow([phone, row['reply'], record_type, row['timestamp']])
             output = make_response(si.getvalue())
             output.headers["Content-Disposition"] = f"attachment; filename=payment_records_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             output.headers["Content-type"] = "text/csv"

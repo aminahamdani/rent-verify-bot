@@ -5,55 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RentVerify Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
         .flash-messages {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 20px auto;
             padding: 0 20px;
         }
+        
         .flash-message {
             padding: 15px 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 10px;
             animation: slideIn 0.3s ease-out;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
         }
+        
         .flash-message.success {
-            background: #d4edda;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
             border-left: 4px solid #28a745;
             color: #155724;
         }
+        
         .flash-message.danger {
-            background: #f8d7da;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
             border-left: 4px solid #dc3545;
             color: #721c24;
         }
+        
         .flash-message.warning {
-            background: #fff3cd;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
             border-left: 4px solid #ffc107;
             color: #856404;
         }
+        
         .flash-message.info {
-            background: #d1ecf1;
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
             border-left: 4px solid #17a2b8;
             color: #0c5460;
         }
+        
         .flash-message .close-btn {
             background: none;
             border: none;
-            font-size: 20px;
+            font-size: 22px;
             cursor: pointer;
             opacity: 0.6;
             transition: opacity 0.2s;
             padding: 0;
             margin-left: 15px;
+            color: inherit;
         }
+        
         .flash-message .close-btn:hover {
             opacity: 1;
         }
+        
         @keyframes slideIn {
             from {
                 transform: translateY(-20px);
@@ -64,28 +88,396 @@
                 opacity: 1;
             }
         }
+
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-title {
+            flex: 1;
+        }
+
+        .dashboard-header h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-header p {
+            color: #718096;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
         .refresh-indicator {
             text-align: center;
-            color: #666;
+            color: rgba(255, 255, 255, 0.9);
             font-size: 0.9rem;
-            padding: 10px;
-            background: #fff;
-            border-radius: 6px;
-            margin: 10px auto;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            margin: 20px auto;
             max-width: 300px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            padding: 25px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            font-weight: 600;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .card-label {
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .card.total { 
+            border-left: 5px solid #667eea;
+        }
+        .card.total .card-value { color: #667eea; }
+
+        .card.yes { 
+            border-left: 5px solid #28a745;
+        }
+        .card.yes .card-value { color: #28a745; }
+
+        .card.no { 
+            border-left: 5px solid #dc3545;
+        }
+        .card.no .card-value { color: #dc3545; }
+
+        .card.pending { 
+            border-left: 5px solid #ffc107;
+        }
+        .card.pending .card-value { color: #ffc107; }
+
+        .tabs-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #718096;
+            position: relative;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-button:hover:not(.active) {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .section-stat {
+            padding: 18px;
+            border-radius: 12px;
+            background: rgba(102, 126, 234, 0.1);
+            text-align: center;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .section-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .section-stat-label {
+            font-size: 0.85rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .table-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            overflow-x: auto;
+        }
+
+        .table-section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #2d3748;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:nth-child(even) {
+            background: #f7fafc;
+        }
+
+        tr:hover {
+            background: #edf2f7;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.yes { 
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        
+        .badge.no { 
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        
+        .badge.pending { 
+            background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+            color: #333;
+        }
+
+        .type-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+
+        .type-badge.tenant {
+            background: #e6f3ff;
+            color: #0066cc;
+        }
+
+        .type-badge.landlord {
+            background: #fff4e6;
+            color: #cc6600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tabs-container {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 12px 8px;
+            }
         }
     </style>
 </head>
 
 <body>
-
     <header class="dashboard-header">
-        <h1>RentVerify Dashboard</h1>
-        <p>Track tenant SMS confirmations in real time</p>
-        <div class="header-actions">
-            <a href="{{ url_for('dashboard.export_csv') }}" class="btn btn-export">📥 Download CSV</a>
-            <a href="{{ url_for('logout') }}" class="btn btn-logout">🚪 Logout</a>
+        <div class="header-content">
+            <div class="header-title">
+                <h1>🏠 RentVerify Dashboard</h1>
+                <p>Track tenant and landlord SMS confirmations in real time</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('dashboard.export_csv') }}" class="btn btn-export">📥 Download CSV</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-logout">🚪 Logout</a>
+            </div>
         </div>
     </header>
 
@@ -103,66 +495,280 @@
         {% endif %}
     {% endwith %}
 
-    <div class="refresh-indicator">🔄 Auto-refreshing every 30 seconds</div>
+    <div class="container">
+        <div class="refresh-indicator">🔄 Auto-refreshing every 30 seconds</div>
 
-    <section class="summary-cards">
-        <div class="card total">Total Messages: {{ total_messages }}</div>
-        <div class="card yes">YES: {{ yes_count }}</div>
-        <div class="card no">NO: {{ no_count }}</div>
-        <div class="card pending">Pending: {{ pending_count }}</div>
-    </section>
+        <!-- Overall Summary Cards -->
+        <div class="summary-cards">
+            <div class="card total">
+                <div class="card-value">{{ total_messages }}</div>
+                <div class="card-label">Total Messages</div>
+            </div>
+            <div class="card yes">
+                <div class="card-value">{{ yes_count }}</div>
+                <div class="card-label">YES Responses</div>
+            </div>
+            <div class="card no">
+                <div class="card-value">{{ no_count }}</div>
+                <div class="card-label">NO Responses</div>
+            </div>
+            <div class="card pending">
+                <div class="card-value">{{ pending_count }}</div>
+                <div class="card-label">Pending</div>
+            </div>
+        </div>
 
-    <section class="table-section">
-        <h2>Recent Messages (Newest First)</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Phone Number</th>
-                    <th>Message</th>
-                    <th>Status</th>
-                    <th>Received At</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for msg in messages %}
-                <tr>
-                    <td>
-                        {% set phone = msg.phone | string %}
-                        {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
-                        {% set digits_only = [] %}
-                        {% for char in cleaned %}
-                            {% if char.isdigit() %}
-                                {% set _ = digits_only.append(char) %}
-                            {% endif %}
+        <!-- Tabs for Tenants and Landlords -->
+        <div class="tabs-container">
+            <button class="tab-button active" onclick="switchTab('tenants')">
+                👥 Tenants ({{ tenant_total }})
+            </button>
+            <button class="tab-button" onclick="switchTab('landlords')">
+                🏢 Landlords ({{ landlord_total }})
+            </button>
+            <button class="tab-button" onclick="switchTab('all')">
+                📊 All Records ({{ total_messages }})
+            </button>
+        </div>
+
+        <!-- Tenants Tab -->
+        <div id="tenants-tab" class="tab-content active">
+            <div class="table-section">
+                <h2>👥 Tenant Records</h2>
+                <div class="section-stats">
+                    <div class="section-stat">
+                        <div class="section-stat-value">{{ tenant_total }}</div>
+                        <div class="section-stat-label">Total</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #28a745;">{{ tenant_yes }}</div>
+                        <div class="section-stat-label">YES</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #dc3545;">{{ tenant_no }}</div>
+                        <div class="section-stat-label">NO</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #ffc107;">{{ tenant_pending }}</div>
+                        <div class="section-stat-label">Pending</div>
+                    </div>
+                </div>
+                {% if tenant_messages %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phone Number</th>
+                            <th>Message</th>
+                            <th>Status</th>
+                            <th>Received At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in tenant_messages %}
+                        <tr>
+                            <td>
+                                {% set phone = msg.phone | string %}
+                                {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
+                                {% set digits_only = [] %}
+                                {% for char in cleaned %}
+                                    {% if char.isdigit() %}
+                                        {% set _ = digits_only.append(char) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if digits_only | length >= 4 %}
+                                    ******{{ digits_only[-4:] | join('') }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                                <span class="type-badge tenant">Tenant</span>
+                            </td>
+                            <td>{{ msg.body }}</td>
+                            <td>
+                                {% if msg.status == 'YES' %}
+                                    <span class="badge yes">YES</span>
+                                {% elif msg.status == 'NO' %}
+                                    <span class="badge no">NO</span>
+                                {% else %}
+                                    <span class="badge pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ msg.timestamp }}</td>
+                        </tr>
                         {% endfor %}
-                        {% if digits_only | length >= 4 %}
-                            ******{{ digits_only[-4:] | join('') }}
-                        {% else %}
-                            Unknown
-                        {% endif %}
-                    </td>
-                    <td>{{ msg.body }}</td>
-                    <td>
-                        {% if msg.status == 'YES' %}
-                            <span class="badge yes">YES</span>
-                        {% elif msg.status == 'NO' %}
-                            <span class="badge no">NO</span>
-                        {% else %}
-                            <span class="badge pending">Pending</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ msg.timestamp }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </section>
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">No tenant records yet</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Landlords Tab -->
+        <div id="landlords-tab" class="tab-content">
+            <div class="table-section">
+                <h2>🏢 Landlord Records</h2>
+                <div class="section-stats">
+                    <div class="section-stat">
+                        <div class="section-stat-value">{{ landlord_total }}</div>
+                        <div class="section-stat-label">Total</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #28a745;">{{ landlord_yes }}</div>
+                        <div class="section-stat-label">YES</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #dc3545;">{{ landlord_no }}</div>
+                        <div class="section-stat-label">NO</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #ffc107;">{{ landlord_pending }}</div>
+                        <div class="section-stat-label">Pending</div>
+                    </div>
+                </div>
+                {% if landlord_messages %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phone Number</th>
+                            <th>Message</th>
+                            <th>Status</th>
+                            <th>Received At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in landlord_messages %}
+                        <tr>
+                            <td>
+                                {% set phone = msg.phone | string %}
+                                {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
+                                {% set digits_only = [] %}
+                                {% for char in cleaned %}
+                                    {% if char.isdigit() %}
+                                        {% set _ = digits_only.append(char) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if digits_only | length >= 4 %}
+                                    ******{{ digits_only[-4:] | join('') }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                                <span class="type-badge landlord">Landlord</span>
+                            </td>
+                            <td>{{ msg.body }}</td>
+                            <td>
+                                {% if msg.status == 'YES' %}
+                                    <span class="badge yes">YES</span>
+                                {% elif msg.status == 'NO' %}
+                                    <span class="badge no">NO</span>
+                                {% else %}
+                                    <span class="badge pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ msg.timestamp }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">No landlord records yet</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- All Records Tab -->
+        <div id="all-tab" class="tab-content">
+            <div class="table-section">
+                <h2>📊 All Records</h2>
+                {% if messages %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phone Number</th>
+                            <th>Message</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                            <th>Received At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in messages %}
+                        <tr>
+                            <td>
+                                {% set phone = msg.phone | string %}
+                                {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
+                                {% set digits_only = [] %}
+                                {% for char in cleaned %}
+                                    {% if char.isdigit() %}
+                                        {% set _ = digits_only.append(char) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if digits_only | length >= 4 %}
+                                    ******{{ digits_only[-4:] | join('') }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </td>
+                            <td>{{ msg.body }}</td>
+                            <td>
+                                {% if msg.status == 'YES' %}
+                                    <span class="badge yes">YES</span>
+                                {% elif msg.status == 'NO' %}
+                                    <span class="badge no">NO</span>
+                                {% else %}
+                                    <span class="badge pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if msg.type == 'landlord' %}
+                                    <span class="type-badge landlord">Landlord</span>
+                                {% else %}
+                                    <span class="type-badge tenant">Tenant</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ msg.timestamp }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">No records yet</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
     <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
         // Auto-refresh the dashboard every 30 seconds
         setTimeout(function() {
             location.reload();
-        }, 30000); // 30 seconds
+        }, 30000);
 
         // Auto-hide flash messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
@@ -174,10 +780,9 @@
                     setTimeout(function() {
                         msg.style.display = 'none';
                     }, 500);
-                }, 5000); // Hide after 5 seconds
+                }, 5000);
             });
         });
     </script>
-
 </body>
 </html>
