@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error {{ code }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f8f8; text-align: center; padding: 50px; }
+        .error-box { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #ccc; display: inline-block; padding: 40px 60px; }
+        h1 { color: #d9534f; }
+        p { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <h1>Error {{ code }}</h1>
+        <p>{{ message }}</p>
+        <p><a href="/">Return to Home</a></p>
+    </div>
+</body>
+</html>
