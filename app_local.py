@@ -129,7 +129,7 @@ def login_required(f):
 def login():
     """Admin login page."""
     if 'logged_in' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard.dashboard'))
     
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -141,7 +141,7 @@ def login():
             session.permanent = True
             flash('Login successful!', 'success')
             logger.info(f"User '{username}' logged in successfully")
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard.dashboard'))
         else:
             flash('Invalid username or password.', 'danger')
             logger.warning(f"Failed login attempt with username: {username}")
@@ -165,7 +165,7 @@ def logout():
 def index():
     """Root route - redirect to dashboard if logged in, otherwise to login."""
     if 'logged_in' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard.dashboard'))
     return redirect(url_for('login'))
 
 

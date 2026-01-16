@@ -49,7 +49,7 @@ def dashboard():
             if not is_valid:
                 for field, error in errors.items():
                     flash(f"{field}: {error}", 'danger')
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('dashboard.dashboard'))
         try:
             logger.info(f"Dashboard accessed by user: {session.get('username', 'Unknown')}")
             conn = db_service.get_db_connection()
@@ -82,8 +82,8 @@ def dashboard():
         except Exception as e:
             logger.error(f"Error loading dashboard: {e}")
             flash('Error loading dashboard data.', 'danger')
-            return render_template('dashboard.html', messages=[], total_messages=0, yes_count=0, no_count=0, pending_count=0)
-    return inner_dashboard()
+                return render_template('dashboard.html', messages=[], total_messages=0, yes_count=0, no_count=0, pending_count=0)
+            return inner_dashboard()
 
 # ==================== CSV Export Route ====================
 @dashboard_bp.route('/export')
@@ -125,7 +125,7 @@ def export_csv():
         except Exception as e:
             logger.error(f"Error exporting CSV: {e}")
             flash('Error exporting data.', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard.dashboard'))
     return inner_export_csv()
 
 # ==================== Test Data Route (Development Only) ====================
@@ -135,7 +135,7 @@ def add_test_data():
     try:
         from app_local import get_db_connection, logger, login_required
     except ImportError:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard.dashboard'))
     @login_required
     def inner_add_test_data():
         try:
