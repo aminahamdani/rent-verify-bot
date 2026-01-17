@@ -474,9 +474,12 @@
                 <h1>🏠 RentVerify Dashboard</h1>
                 <p>Track tenant and landlord SMS confirmations in real time</p>
             </div>
-            <div class="header-actions">
+        <div class="header-actions">
+                <form method="POST" action="{{ url_for('dashboard.update_to_landlord') }}" style="display: inline;">
+                    <button type="submit" class="btn btn-update" onclick="return confirm('This will update all existing records to \"landlord\" type. Continue?');">🔄 Update to Landlord</button>
+                </form>
                 <a href="{{ url_for('dashboard.export_csv') }}" class="btn btn-export">📥 Download CSV</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-logout">🚪 Logout</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-logout">🚪 Logout</a>
             </div>
         </div>
     </header>
@@ -496,7 +499,7 @@
     {% endwith %}
 
     <div class="container">
-        <div class="refresh-indicator">🔄 Auto-refreshing every 30 seconds</div>
+    <div class="refresh-indicator">🔄 Auto-refreshing every 30 seconds</div>
 
         <!-- Overall Summary Cards -->
         <div class="summary-cards">
@@ -629,15 +632,15 @@
                     </div>
                 </div>
                 {% if landlord_messages %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Phone Number</th>
-                            <th>Message</th>
-                            <th>Status</th>
-                            <th>Received At</th>
-                        </tr>
-                    </thead>
+        <table>
+            <thead>
+                <tr>
+                    <th>Phone Number</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                    <th>Received At</th>
+                </tr>
+            </thead>
                     <tbody>
                         {% for msg in landlord_messages %}
                         <tr>
@@ -696,34 +699,34 @@
                             <th>Received At</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for msg in messages %}
-                        <tr>
-                            <td>
-                                {% set phone = msg.phone | string %}
-                                {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
-                                {% set digits_only = [] %}
-                                {% for char in cleaned %}
-                                    {% if char.isdigit() %}
-                                        {% set _ = digits_only.append(char) %}
-                                    {% endif %}
-                                {% endfor %}
-                                {% if digits_only | length >= 4 %}
-                                    ******{{ digits_only[-4:] | join('') }}
-                                {% else %}
-                                    Unknown
-                                {% endif %}
-                            </td>
-                            <td>{{ msg.body }}</td>
-                            <td>
-                                {% if msg.status == 'YES' %}
-                                    <span class="badge yes">YES</span>
-                                {% elif msg.status == 'NO' %}
-                                    <span class="badge no">NO</span>
-                                {% else %}
-                                    <span class="badge pending">Pending</span>
-                                {% endif %}
-                            </td>
+            <tbody>
+                {% for msg in messages %}
+                <tr>
+                    <td>
+                        {% set phone = msg.phone | string %}
+                        {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
+                        {% set digits_only = [] %}
+                        {% for char in cleaned %}
+                            {% if char.isdigit() %}
+                                {% set _ = digits_only.append(char) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if digits_only | length >= 4 %}
+                            ******{{ digits_only[-4:] | join('') }}
+                        {% else %}
+                            Unknown
+                        {% endif %}
+                    </td>
+                    <td>{{ msg.body }}</td>
+                    <td>
+                        {% if msg.status == 'YES' %}
+                            <span class="badge yes">YES</span>
+                        {% elif msg.status == 'NO' %}
+                            <span class="badge no">NO</span>
+                        {% else %}
+                            <span class="badge pending">Pending</span>
+                        {% endif %}
+                    </td>
                             <td>
                                 {% if msg.type == 'landlord' %}
                                     <span class="type-badge landlord">Landlord</span>
@@ -731,11 +734,11 @@
                                     <span class="type-badge tenant">Tenant</span>
                                 {% endif %}
                             </td>
-                            <td>{{ msg.timestamp }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    <td>{{ msg.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
                 {% else %}
                 <div class="empty-state">
                     <div class="empty-state-icon">📭</div>

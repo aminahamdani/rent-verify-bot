@@ -52,6 +52,19 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
+.btn-update {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-update:hover {
+    background: #138496;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
 .summary-cards {
     display: flex;
     gap: 20px;

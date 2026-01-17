@@ -258,3 +258,80 @@ def add_test_data():
             flash('Error adding test data.', 'danger')
         return redirect(url_for('dashboard'))
     return inner_add_test_data()
+
+
+# ==================== Update Records to Landlord Route ====================
+@dashboard_bp.route('/update-to-landlord', methods=['POST'])
+def update_to_landlord():
+    """Update all existing records to have record_type = 'landlord' (admin only)."""
+    # Lazy import to avoid circular dependencies
+    try:
+        from app import login_required, logger
+    except ImportError:
+        try:
+            from app_local import login_required, logger
+        except ImportError:
+            import logging
+            logger = logging.getLogger(__name__)
+            def login_required(f):
+                return f
+    
+    @login_required
+    def inner_update_to_landlord():
+        try:
+            import os
+            DATABASE_URL = os.getenv('DATABASE_URL')
+            conn = db_service.get_db_connection()
+            
+            if DATABASE_URL:
+                # PostgreSQL
+                from psycopg2.extras import RealDictCursor
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                
+                # Count records to update
+                cursor.execute("SELECT COUNT(*) as count FROM rent_records WHERE record_type IS NULL OR record_type = 'tenant'")
+                count_result = cursor.fetchone()
+                count_to_update = count_result['count'] if count_result else 0
+                
+                if count_to_update > 0:
+                    cursor.execute("UPDATE rent_records SET record_type = 'landlord' WHERE record_type IS NULL OR record_type = 'tenant'")
+                    conn.commit()
+                    flash(f'Successfully updated {count_to_update} record(s) to "landlord"!', 'success')
+                    logger.info(f"Updated {count_to_update} records to landlord")
+                else:
+                    flash('No records to update (all records are already "landlord")', 'info')
+                
+            else:
+                # SQLite
+                cursor = conn.cursor()
+                
+                # Check if record_type column exists
+                cursor.execute("PRAGMA table_info(rent_records)")
+                columns = [col[1] for col in cursor.fetchall()]
+                
+                if 'record_type' not in columns:
+                    cursor.execute("ALTER TABLE rent_records ADD COLUMN record_type TEXT DEFAULT 'tenant'")
+                    conn.commit()
+                
+                # Count records to update
+                cursor.execute("SELECT COUNT(*) FROM rent_records WHERE record_type IS NULL OR record_type = 'tenant'")
+                count_to_update = cursor.fetchone()[0]
+                
+                if count_to_update > 0:
+                    cursor.execute("UPDATE rent_records SET record_type = 'landlord' WHERE record_type IS NULL OR record_type = 'tenant'")
+                    conn.commit()
+                    flash(f'Successfully updated {count_to_update} record(s) to "landlord"!', 'success')
+                    logger.info(f"Updated {count_to_update} records to landlord")
+                else:
+                    flash('No records to update (all records are already "landlord")', 'info')
+            
+            cursor.close()
+            conn.close()
+            
+        except Exception as e:
+            logger.error(f"Error updating records: {e}")
+            flash('Error updating records. Please try again.', 'danger')
+        
+        return redirect(url_for('dashboard.dashboard'))
+    
+    return inner_update_to_landlord()
