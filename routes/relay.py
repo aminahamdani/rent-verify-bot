@@ -6,6 +6,7 @@ This allows sending the same SMS to both Azure and Render (or other platforms)
 from flask import Blueprint, request
 import requests
 import logging
+import os
 
 relay_bp = Blueprint('relay', __name__)
 logger = logging.getLogger(__name__)
@@ -24,13 +25,15 @@ def sms_relay():
         # List of endpoints to forward to
         endpoints = []
         
-        # Azure endpoint (your current Azure URL)
-        azure_url = 'https://rentverify-app-fbbbazaagbd8e0hn.canadacentral-01.azurewebsites.net/sms'
-        endpoints.append(('Azure', azure_url))
+        # Azure endpoint (from environment variable or default)
+        azure_url = os.getenv('AZURE_WEBHOOK_URL', 'https://rentverify-app-fbbbazaagbd8e0hn.canadacentral-01.azurewebsites.net/sms')
+        if azure_url:
+            endpoints.append(('Azure', azure_url))
         
-        # Render endpoint (if you have one)
-        render_url = 'https://rent-verify-bot.onrender.com/sms'
-        endpoints.append(('Render', render_url))
+        # Render endpoint (from environment variable or default)
+        render_url = os.getenv('RENDER_WEBHOOK_URL', 'https://rent-verify-bot.onrender.com/sms')
+        if render_url:
+            endpoints.append(('Render', render_url))
         
         results = []
         
@@ -44,6 +47,9 @@ def sms_relay():
                 else:
                     results.append(f"{name}: Error {response.status_code}")
                     logger.warning(f"Failed to forward to {name}: {response.status_code}")
+            except requests.exceptions.Timeout:
+                results.append(f"{name}: Timeout")
+                logger.warning(f"Timeout forwarding to {name}: {url}")
             except Exception as e:
                 results.append(f"{name}: Error - {str(e)}")
                 logger.error(f"Error forwarding to {name}: {e}")
