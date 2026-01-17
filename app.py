@@ -208,6 +208,61 @@ def init_database(database_url, logger):
             )
         ''')
         
+        # Create tenants table - simplified for credit reporting
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tenants (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                address TEXT NOT NULL,
+                phone_number TEXT NOT NULL,
+                email TEXT,
+                rent_amount DECIMAL(10, 2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create landlords table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS landlords (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone_number TEXT NOT NULL,
+                address TEXT NOT NULL,
+                email TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create outgoing_messages table - messages sent from dashboard/system to landlords
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS outgoing_messages (
+                id SERIAL PRIMARY KEY,
+                landlord_name TEXT NOT NULL,
+                landlord_phone TEXT NOT NULL,
+                landlord_address TEXT NOT NULL,
+                landlord_email TEXT,
+                message_body TEXT NOT NULL,
+                sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                twilio_message_sid TEXT,
+                status TEXT DEFAULT 'sent'
+            )
+        ''')
+        
+        # Create incoming_messages table - landlord replies (yes/no) from Twilio
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS incoming_messages (
+                id SERIAL PRIMARY KEY,
+                landlord_phone TEXT NOT NULL,
+                message_body TEXT NOT NULL,
+                received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                twilio_message_sid TEXT,
+                is_yes BOOLEAN DEFAULT FALSE,
+                is_no BOOLEAN DEFAULT FALSE
+            )
+        ''')
+        
         conn.commit()
         cursor.close()
         conn.close()

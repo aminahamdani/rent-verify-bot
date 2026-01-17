@@ -16,6 +16,7 @@ from datetime import datetime
 import csv
 from io import StringIO
 from services import db_service
+from services.twilio_service import send_sms_to_landlord
 
 # Create the dashboard blueprint
 # url_prefix is not set, so routes are registered at the root level
@@ -74,17 +75,105 @@ def dashboard():
                 # SQLite - row_factory is set on connection, not cursor
                 cursor = conn.cursor()
             
-            cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC")
-            rows = cursor.fetchall()
-            db_service.close_db_connection(conn)
-            logger.info(f"Retrieved {len(rows)} messages from database")
+            # Fetch outgoing messages (sent from dashboard/system to landlords)
+            outgoing_rows = []
+            incoming_rows = []
+            try:
+                cursor.execute("SELECT * FROM outgoing_messages ORDER BY sent_at DESC LIMIT 100")
+                outgoing_rows = cursor.fetchall()
+            except Exception as e:
+                logger.warning(f"Could not fetch outgoing_messages (table may not exist yet): {e}")
             
-            # Separate messages by type
+            # Fetch incoming messages (landlord replies from Twilio)
+            try:
+                cursor.execute("SELECT * FROM incoming_messages ORDER BY received_at DESC LIMIT 100")
+                incoming_rows = cursor.fetchall()
+            except Exception as e:
+                logger.warning(f"Could not fetch incoming_messages (table may not exist yet): {e}")
+            
+            # Also fetch legacy rent_records for backward compatibility
+            cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC LIMIT 100")
+            legacy_rows = cursor.fetchall()
+            
+            db_service.close_db_connection(conn)
+            logger.info(f"Retrieved {len(outgoing_rows)} outgoing, {len(incoming_rows)} incoming messages")
+            
+            # Process outgoing messages
+            outgoing_messages = []
+            for row in outgoing_rows:
+                if isinstance(row, dict):
+                    phone = mask_phone_number(row['landlord_phone']) if use_mask else row['landlord_phone']
+                    msg_data = {
+                        'name': row.get('landlord_name', ''),
+                        'phone': phone,
+                        'address': row.get('landlord_address', ''),
+                        'email': row.get('landlord_email', ''),
+                        'body': row.get('message_body', ''),
+                        'sent_at': str(row.get('sent_at', '')),
+                        'status': row.get('status', 'sent'),
+                        'twilio_sid': row.get('twilio_message_sid', '')
+                    }
+                else:
+                    # SQLite Row object
+                    phone = mask_phone_number(row['landlord_phone']) if use_mask else row['landlord_phone']
+                    msg_data = {
+                        'name': row.get('landlord_name', ''),
+                        'phone': phone,
+                        'address': row.get('landlord_address', ''),
+                        'email': row.get('landlord_email', ''),
+                        'body': row.get('message_body', ''),
+                        'sent_at': str(row.get('sent_at', '')),
+                        'status': row.get('status', 'sent'),
+                        'twilio_sid': row.get('twilio_message_sid', '')
+                    }
+                outgoing_messages.append(msg_data)
+            
+            # Process incoming messages (landlord replies)
+            incoming_messages = []
+            for row in incoming_rows:
+                if isinstance(row, dict):
+                    phone = mask_phone_number(row['landlord_phone']) if use_mask else row['landlord_phone']
+                    is_yes = row.get('is_yes', False)
+                    is_no = row.get('is_no', False)
+                    # Convert boolean for SQLite (0/1) to bool
+                    if isinstance(is_yes, int):
+                        is_yes = bool(is_yes)
+                    if isinstance(is_no, int):
+                        is_no = bool(is_no)
+                    
+                    status = 'YES' if is_yes else ('NO' if is_no else 'Pending')
+                    msg_data = {
+                        'phone': phone,
+                        'body': row.get('message_body', ''),
+                        'status': status,
+                        'received_at': str(row.get('received_at', '')),
+                        'is_yes': is_yes,
+                        'is_no': is_no,
+                        'twilio_sid': row.get('twilio_message_sid', '')
+                    }
+                else:
+                    # SQLite Row object
+                    phone = mask_phone_number(row['landlord_phone']) if use_mask else row['landlord_phone']
+                    is_yes = bool(row.get('is_yes', 0))
+                    is_no = bool(row.get('is_no', 0))
+                    status = 'YES' if is_yes else ('NO' if is_no else 'Pending')
+                    msg_data = {
+                        'phone': phone,
+                        'body': row.get('message_body', ''),
+                        'status': status,
+                        'received_at': str(row.get('received_at', '')),
+                        'is_yes': is_yes,
+                        'is_no': is_no,
+                        'twilio_sid': row.get('twilio_message_sid', '')
+                    }
+                incoming_messages.append(msg_data)
+            
+            # Process legacy rent_records for backward compatibility
             tenant_messages = []
             landlord_messages = []
             all_messages = []
             
-            for row in rows:
+            for row in legacy_rows:
                 # Handle both dict-like (PostgreSQL) and tuple-like (SQLite) rows
                 if isinstance(row, dict):
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
@@ -132,11 +221,18 @@ def dashboard():
             landlord_no = sum(1 for msg in landlord_messages if msg['status'] == 'NO')
             landlord_pending = landlord_total - landlord_yes - landlord_no
             
+            # Calculate statistics for incoming messages
+            incoming_yes = sum(1 for msg in incoming_messages if msg['is_yes'])
+            incoming_no = sum(1 for msg in incoming_messages if msg['is_no'])
+            incoming_pending = len(incoming_messages) - incoming_yes - incoming_no
+            
             return render_template(
                 'dashboard.html',
                 messages=all_messages,
                 tenant_messages=tenant_messages,
                 landlord_messages=landlord_messages,
+                outgoing_messages=outgoing_messages,
+                incoming_messages=incoming_messages,
                 total_messages=total_messages,
                 yes_count=yes_count,
                 no_count=no_count,
@@ -148,7 +244,12 @@ def dashboard():
                 landlord_total=landlord_total,
                 landlord_yes=landlord_yes,
                 landlord_no=landlord_no,
-                landlord_pending=landlord_pending
+                landlord_pending=landlord_pending,
+                outgoing_total=len(outgoing_messages),
+                incoming_total=len(incoming_messages),
+                incoming_yes=incoming_yes,
+                incoming_no=incoming_no,
+                incoming_pending=incoming_pending
             )
         except Exception as e:
             logger.error(f"Error loading dashboard: {e}")
@@ -335,3 +436,65 @@ def update_to_landlord():
         return redirect(url_for('dashboard.dashboard'))
     
     return inner_update_to_landlord()
+
+
+# ==================== Send SMS to Landlord Route ====================
+@dashboard_bp.route('/send-sms', methods=['POST'])
+def send_sms_to_landlord_route():
+    """Send SMS message to landlord and store in outgoing_messages table."""
+    # Lazy import to avoid circular dependencies
+    try:
+        from app import login_required, logger
+    except ImportError:
+        try:
+            from app_local import login_required, logger
+        except ImportError:
+            import logging
+            logger = logging.getLogger(__name__)
+            def login_required(f):
+                return f
+    
+    @login_required
+    def inner_send_sms():
+        try:
+            # Get form data
+            landlord_name = request.form.get('landlord_name', '').strip()
+            landlord_phone = request.form.get('landlord_phone', '').strip()
+            landlord_address = request.form.get('landlord_address', '').strip()
+            landlord_email = request.form.get('landlord_email', '').strip()
+            message_body = request.form.get('message_body', '').strip()
+            
+            # Validate required fields
+            if not all([landlord_name, landlord_phone, landlord_address, message_body]):
+                flash('Please fill in all required fields (Name, Phone, Address, Message).', 'danger')
+                return redirect(url_for('dashboard.dashboard'))
+            
+            # Default message if not provided
+            if not message_body:
+                message_body = f"Hi {landlord_name}, did you receive the rent payment for the property at {landlord_address}? Please reply YES or NO."
+            
+            # Send SMS via Twilio service
+            success, message_sid, error_msg = send_sms_to_landlord(
+                landlord_name=landlord_name,
+                landlord_phone=landlord_phone,
+                landlord_address=landlord_address,
+                landlord_email=landlord_email,
+                message_body=message_body,
+                db_service=db_service,
+                logger=logger
+            )
+            
+            if success:
+                flash(f'SMS sent successfully to {landlord_name}! Message SID: {message_sid[:20]}...', 'success')
+                logger.info(f"SMS sent to {landlord_name} ({landlord_phone}) - SID: {message_sid}")
+            else:
+                flash(f'Error sending SMS: {error_msg}', 'danger')
+                logger.error(f"Failed to send SMS to {landlord_name}: {error_msg}")
+        
+        except Exception as e:
+            logger.error(f"Error sending SMS: {e}")
+            flash('Error sending SMS. Please try again.', 'danger')
+        
+        return redirect(url_for('dashboard.dashboard'))
+    
+    return inner_send_sms()

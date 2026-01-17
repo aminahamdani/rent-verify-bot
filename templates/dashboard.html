@@ -526,6 +526,12 @@
             <button class="tab-button" onclick="switchTab('landlords')">
                 🏢 Landlords ({{ landlord_total }})
             </button>
+            <button class="tab-button" onclick="switchTab('outgoing')">
+                📤 Outgoing ({{ outgoing_total or 0 }})
+            </button>
+            <button class="tab-button" onclick="switchTab('incoming')">
+                📥 Incoming ({{ incoming_total or 0 }})
+            </button>
             <button class="tab-button" onclick="switchTab('all')">
                 📊 All Records ({{ total_messages }})
             </button>
@@ -740,6 +746,170 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">📭</div>
                     <div class="empty-state-text">No records yet</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Outgoing Messages Tab -->
+        <div id="outgoing-tab" class="tab-content">
+            <div class="table-section">
+                <h2>📤 Outgoing Messages (System → Landlords)</h2>
+                <div class="section-stats">
+                    <div class="section-stat">
+                        <div class="section-stat-value">{{ outgoing_total or 0 }}</div>
+                        <div class="section-stat-label">Total Sent</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #2d3748;">Send SMS to Landlord</h3>
+                    <form method="POST" action="{{ url_for('dashboard.send_sms_to_landlord_route') }}" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Landlord Name *</label>
+                                <input type="text" name="landlord_name" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Phone Number *</label>
+                                <input type="tel" name="landlord_phone" required placeholder="+1234567890" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Address *</label>
+                                <input type="text" name="landlord_address" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Email</label>
+                                <input type="email" name="landlord_email" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Message *</label>
+                            <textarea name="message_body" required rows="3" placeholder="Did you receive the rent payment for the property? Please reply YES or NO." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit;"></textarea>
+                        </div>
+                        <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">📤 Send SMS</button>
+                    </form>
+                </div>
+                {% if outgoing_messages %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Landlord Name</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Email</th>
+                            <th>Message</th>
+                            <th>Sent At</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in outgoing_messages %}
+                        <tr>
+                            <td>{{ msg.name }}</td>
+                            <td>
+                                {% set phone = msg.phone | string %}
+                                {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
+                                {% set digits_only = [] %}
+                                {% for char in cleaned %}
+                                    {% if char.isdigit() %}
+                                        {% set _ = digits_only.append(char) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if digits_only | length >= 4 %}
+                                    ******{{ digits_only[-4:] | join('') }}
+                                {% else %}
+                                    {{ msg.phone }}
+                                {% endif %}
+                            </td>
+                            <td>{{ msg.address }}</td>
+                            <td>{{ msg.email or '-' }}</td>
+                            <td>{{ msg.body[:50] }}{% if msg.body|length > 50 %}...{% endif %}</td>
+                            <td>{{ msg.sent_at[:19] if msg.sent_at|length > 19 else msg.sent_at }}</td>
+                            <td>
+                                <span class="badge {% if msg.status == 'sent' %}yes{% else %}pending{% endif %}">{{ msg.status }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">No outgoing messages yet</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Incoming Messages Tab -->
+        <div id="incoming-tab" class="tab-content">
+            <div class="table-section">
+                <h2>📥 Incoming Messages (Landlords → System)</h2>
+                <div class="section-stats">
+                    <div class="section-stat">
+                        <div class="section-stat-value">{{ incoming_total or 0 }}</div>
+                        <div class="section-stat-label">Total</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #28a745;">{{ incoming_yes or 0 }}</div>
+                        <div class="section-stat-label">YES</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #dc3545;">{{ incoming_no or 0 }}</div>
+                        <div class="section-stat-label">NO</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #ffc107;">{{ incoming_pending or 0 }}</div>
+                        <div class="section-stat-label">Pending</div>
+                    </div>
+                </div>
+                {% if incoming_messages %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Landlord Phone</th>
+                            <th>Message</th>
+                            <th>Status</th>
+                            <th>Received At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in incoming_messages %}
+                        <tr>
+                            <td>
+                                {% set phone = msg.phone | string %}
+                                {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
+                                {% set digits_only = [] %}
+                                {% for char in cleaned %}
+                                    {% if char.isdigit() %}
+                                        {% set _ = digits_only.append(char) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if digits_only | length >= 4 %}
+                                    ******{{ digits_only[-4:] | join('') }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </td>
+                            <td>{{ msg.body }}</td>
+                            <td>
+                                {% if msg.status == 'YES' %}
+                                    <span class="badge yes">YES</span>
+                                {% elif msg.status == 'NO' %}
+                                    <span class="badge no">NO</span>
+                                {% else %}
+                                    <span class="badge pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ msg.received_at[:19] if msg.received_at|length > 19 else msg.received_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">No incoming messages yet</div>
                 </div>
                 {% endif %}
             </div>

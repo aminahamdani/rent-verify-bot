@@ -98,6 +98,61 @@ def init_db():
             )
         ''')
         
+        # Create tenants table - simplified for credit reporting
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tenants (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                address TEXT NOT NULL,
+                phone_number TEXT NOT NULL,
+                email TEXT,
+                rent_amount REAL NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create landlords table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS landlords (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                phone_number TEXT NOT NULL,
+                address TEXT NOT NULL,
+                email TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create outgoing_messages table - messages sent from dashboard/system to landlords
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS outgoing_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                landlord_name TEXT NOT NULL,
+                landlord_phone TEXT NOT NULL,
+                landlord_address TEXT NOT NULL,
+                landlord_email TEXT,
+                message_body TEXT NOT NULL,
+                sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                twilio_message_sid TEXT,
+                status TEXT DEFAULT 'sent'
+            )
+        ''')
+        
+        # Create incoming_messages table - landlord replies (yes/no) from Twilio
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS incoming_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                landlord_phone TEXT NOT NULL,
+                message_body TEXT NOT NULL,
+                received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                twilio_message_sid TEXT,
+                is_yes INTEGER DEFAULT 0,
+                is_no INTEGER DEFAULT 0
+            )
+        ''')
+        
         conn.commit()
         conn.close()
         logger.info("SQLite database initialized successfully")
