@@ -35,6 +35,29 @@ This file documents the major steps taken to develop the RentVerify project, inc
 - All changes committed and pushed to GitHub.
 - README updated to reflect new structure and features.
 
+### Dependency Updates & Database Migrations
+- Updated `psycopg2-binary` to version 2.9.10 for improved PostgreSQL compatibility.
+- Added Alembic (1.13.1) and SQLAlchemy (2.0.23) for database migration management.
+- Database migrations supported via Alembic for schema versioning and updates.
+
+### Deployment Configuration
+- **Render**: Configured with automatic deployment on push to `main` branch.
+- **Azure App Service**: Configured with GitHub Actions workflows for automatic deployment.
+  - Workflow files: `.github/workflows/azure-webapps-deploy.yml` and `.github/workflows/main_rentverify-app.yml`
+  - Auto-deploys on every push to `main` branch
+  - App name: `RentVerify-app`
+- Both platforms now automatically deploy from GitHub repository.
+
+### Dashboard & Service Layer Improvements
+- Enhanced dashboard UI with improved styling and responsiveness.
+- Service layer refinements for better error handling and data processing.
+- Database service improvements for connection management.
+
+### Latest Updates (2026)
+- Application updates with dashboard enhancements and service layer improvements.
+- All changes committed and pushed to GitHub (commit: 735a23d).
+- Both Render and Azure deployments will auto-deploy from latest push.
+
 ---
 
 ## Architectural Highlights

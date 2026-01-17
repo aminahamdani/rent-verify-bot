@@ -225,24 +225,21 @@ Visit `/dashboard` to view and manage payment records:
 
 ### Quick Deploy on Render
 
+**Note:** Render automatically deploys from GitHub on every push to the `main` branch.
+
 1. **Create PostgreSQL Database**
    - Go to Render Dashboard → New → PostgreSQL
    - Copy the Internal Database URL
 
-2. **Push to GitHub**
-   ```bash
-   git add .
-   git commit -m "Ready for deployment"
-   git push origin main
-   ```
-
-3. **Deploy Web Service**
+2. **Deploy Web Service**
    - Go to https://render.com/ → New → Web Service
-   - Connect your GitHub repository
+   - Connect your GitHub repository: `aminahamdani/rent-verify-bot`
+   - Branch: `main`
    - Build: `pip install -r requirements.txt`
    - Start: Uses `Procfile` automatically
+   - **Auto-deploy**: Enabled (deploys on every push)
 
-4. **Set Environment Variables**
+3. **Set Environment Variables**
    Add these in Render Dashboard → Environment:
    ```env
    DATABASE_URL=<your-postgres-internal-url>
@@ -256,13 +253,13 @@ Visit `/dashboard` to view and manage payment records:
    PORT=10000
    ```
 
-5. **Run Migrations**
+4. **Run Migrations**
    - In Render Dashboard → Shell:
    ```bash
    python create_tables.py
    ```
 
-6. **Configure Twilio Webhook**
+5. **Configure Twilio Webhook**
    - Twilio Console → Phone Numbers → Your Number
    - Webhook URL: `https://your-app.onrender.com/sms`
    - Method: POST
@@ -291,8 +288,10 @@ Flask==3.0.0
 twilio==8.10.0
 python-dotenv==1.0.0
 gunicorn==21.2.0
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
 Werkzeug==3.0.1
+alembic==1.13.1
+SQLAlchemy==2.0.23
 ```
 
 ### Database Migrations
@@ -301,6 +300,20 @@ Using Alembic for schema management:
 alembic revision --autogenerate -m "description"
 alembic upgrade head
 ```
+
+### Azure Deployment
+
+Azure App Service is configured with GitHub Actions for automatic deployment on push to `main`.
+
+**Quick Setup:**
+1. Azure Portal → Create App Service (Python 3.11, Linux)
+2. Deployment Center → Connect GitHub repository
+3. Configure environment variables in Azure Portal
+4. Auto-deploys on every push to `main`
+
+See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for complete Azure deployment guide.
+
+---
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for complete step-by-step instructions.
 
