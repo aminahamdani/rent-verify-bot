@@ -22,13 +22,23 @@ def process_incoming_sms(phone_number, reply, timestamp, db_service, mask_phone_
         conn = db_service.get_db_connection()
         DATABASE_URL = os.getenv('DATABASE_URL')
         
-        # Determine record type based on message content or phone number pattern
-        # For demo purposes, we'll use a simple heuristic
-        # In production, you might want to maintain a mapping of phone numbers to types
-        record_type = 'tenant'  # Default to tenant
-        reply_upper = reply.upper()
-        if 'LANDLORD' in reply_upper or 'OWNER' in reply_upper:
+        # Determine record type based on message content
+        # Default to landlord (can be overridden via environment variable DEFAULT_RECORD_TYPE)
+        default_type = os.getenv('DEFAULT_RECORD_TYPE', 'landlord').lower()
+        record_type = default_type if default_type in ['tenant', 'landlord'] else 'landlord'
+        
+        reply_upper = reply.upper().strip()
+        
+        # Check for landlord keywords
+        landlord_keywords = ['LANDLORD', 'OWNER', 'LL', 'PROPERTY OWNER', 'RENTAL OWNER']
+        tenant_keywords = ['TENANT', 'RENTER', 'RESIDENT', 'TT']
+        
+        # If message contains landlord keywords, set to landlord
+        if any(keyword in reply_upper for keyword in landlord_keywords):
             record_type = 'landlord'
+        # If message contains tenant keywords, set to tenant
+        elif any(keyword in reply_upper for keyword in tenant_keywords):
+            record_type = 'tenant'
         
         if DATABASE_URL:
             # PostgreSQL - use %s placeholders
