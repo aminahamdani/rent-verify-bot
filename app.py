@@ -99,6 +99,13 @@ def create_app():
     from routes.dashboard import dashboard_bp
     app.register_blueprint(sms_bp)
     app.register_blueprint(dashboard_bp)
+    
+    # Register relay blueprint (optional - for forwarding to multiple endpoints)
+    try:
+        from routes.relay import relay_bp
+        app.register_blueprint(relay_bp)
+    except ImportError:
+        pass  # Relay is optional
 
     # Import and register authentication and root routes
     from flask import request, render_template, session, redirect, url_for, flash
