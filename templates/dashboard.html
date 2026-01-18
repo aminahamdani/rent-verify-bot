@@ -683,24 +683,6 @@
         <div id="landlord-tab" class="tab-content">
             <div class="table-section">
                 <h2>🏢 Landlord Records</h2>
-                <div class="section-stats">
-                    <div class="section-stat">
-                        <div class="section-stat-value">{{ landlord_total or 0 }}</div>
-                        <div class="section-stat-label">Total</div>
-                    </div>
-                    <div class="section-stat">
-                        <div class="section-stat-value" style="color: #28a745;">{{ landlord_yes or 0 }}</div>
-                        <div class="section-stat-label">YES</div>
-                    </div>
-                    <div class="section-stat">
-                        <div class="section-stat-value" style="color: #dc3545;">{{ landlord_no or 0 }}</div>
-                        <div class="section-stat-label">NO</div>
-                    </div>
-                    <div class="section-stat">
-                        <div class="section-stat-value" style="color: #ffc107;">{{ landlord_pending or 0 }}</div>
-                        <div class="section-stat-label">Pending</div>
-                    </div>
-                </div>
                 <div style="margin-bottom: 30px;">
                     <h3 style="margin-bottom: 15px; color: #2d3748;">Add New Landlord Record</h3>
                     <form method="POST" action="{{ url_for('dashboard.add_landlord_record') }}" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -779,24 +761,6 @@
         <div id="tenants-tab" class="tab-content">
             <div class="table-section">
                 <h2>👥 Tenant Records</h2>
-                <div class="section-stats">
-                    <div class="section-stat">
-                        <div class="section-stat-value">{{ tenant_total }}</div>
-                        <div class="section-stat-label">Total</div>
-                    </div>
-                    <div class="section-stat">
-                        <div class="section-stat-value" style="color: #28a745;">{{ tenant_yes }}</div>
-                        <div class="section-stat-label">YES</div>
-                    </div>
-                    <div class="section-stat">
-                        <div class="section-stat-value" style="color: #dc3545;">{{ tenant_no }}</div>
-                        <div class="section-stat-label">NO</div>
-                    </div>
-                    <div class="section-stat">
-                        <div class="section-stat-value" style="color: #ffc107;">{{ tenant_pending }}</div>
-                        <div class="section-stat-label">Pending</div>
-                    </div>
-                </div>
                 <div style="margin-bottom: 30px;">
                     <h3 style="margin-bottom: 15px; color: #2d3748;">Add New Tenant Record</h3>
                     <form method="POST" action="{{ url_for('dashboard.add_tenant_record') }}" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
