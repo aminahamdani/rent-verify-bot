@@ -499,13 +499,16 @@
     <div class="refresh-indicator">🔄 Auto-refreshing every 30 seconds</div>
 
 
-        <!-- Tabs for 3 Main Views -->
+        <!-- Tabs for 4 Main Views -->
         <div class="tabs-container">
             <button class="tab-button active" onclick="switchTab('outgoing')">
                 📤 Outgoing Messages ({{ outgoing_total or 0 }})
             </button>
             <button class="tab-button" onclick="switchTab('incoming')">
                 📥 Incoming Messages ({{ incoming_total or 0 }})
+            </button>
+            <button class="tab-button" onclick="switchTab('landlord')">
+                🏢 Landlord Record ({{ landlord_total or 0 }})
             </button>
             <button class="tab-button" onclick="switchTab('tenants')">
                 👥 Tenants Record ({{ tenant_total }})
@@ -671,6 +674,81 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">📭</div>
                     <div class="empty-state-text">No incoming messages yet</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Landlord Record Tab -->
+        <div id="landlord-tab" class="tab-content">
+            <div class="table-section">
+                <h2>🏢 Landlord Records</h2>
+                <div class="section-stats">
+                    <div class="section-stat">
+                        <div class="section-stat-value">{{ landlord_total or 0 }}</div>
+                        <div class="section-stat-label">Total</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #28a745;">{{ landlord_yes or 0 }}</div>
+                        <div class="section-stat-label">YES</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #dc3545;">{{ landlord_no or 0 }}</div>
+                        <div class="section-stat-label">NO</div>
+                    </div>
+                    <div class="section-stat">
+                        <div class="section-stat-value" style="color: #ffc107;">{{ landlord_pending or 0 }}</div>
+                        <div class="section-stat-label">Pending</div>
+                    </div>
+                </div>
+                {% if landlord_messages %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phone Number</th>
+                            <th>Message</th>
+                            <th>Status</th>
+                            <th>Received At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in landlord_messages %}
+                        <tr>
+                            <td>
+                                {% set phone = msg.phone | string %}
+                                {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
+                                {% set digits_only = [] %}
+                                {% for char in cleaned %}
+                                    {% if char.isdigit() %}
+                                        {% set _ = digits_only.append(char) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if digits_only | length >= 4 %}
+                                    ******{{ digits_only[-4:] | join('') }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                                <span class="type-badge landlord">Landlord</span>
+                            </td>
+                            <td>{{ msg.body }}</td>
+                            <td>
+                                {% if msg.status == 'YES' %}
+                                    <span class="badge yes">YES</span>
+                                {% elif msg.status == 'NO' %}
+                                    <span class="badge no">NO</span>
+                                {% else %}
+                                    <span class="badge pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ msg.timestamp }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">No landlord records yet</div>
                 </div>
                 {% endif %}
             </div>
