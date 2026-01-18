@@ -153,6 +153,25 @@ def init_db():
             )
         ''')
         
+        # Create landlord_record table - landlord payment records
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS landlord_record (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                phone_number TEXT NOT NULL,
+                reply TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Update tenants table - add reply and timestamp columns if they don't exist
+        cursor.execute("PRAGMA table_info(tenants)")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'reply' not in columns:
+            cursor.execute("ALTER TABLE tenants ADD COLUMN reply TEXT")
+        if 'timestamp' not in columns:
+            cursor.execute("ALTER TABLE tenants ADD COLUMN timestamp TEXT")
+        
         conn.commit()
         conn.close()
         logger.info("SQLite database initialized successfully")

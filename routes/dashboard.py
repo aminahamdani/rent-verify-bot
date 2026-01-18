@@ -91,12 +91,24 @@ def dashboard():
             except Exception as e:
                 logger.warning(f"Could not fetch incoming_messages (table may not exist yet): {e}")
             
-            # Also fetch legacy rent_records for backward compatibility
-            cursor.execute("SELECT * FROM rent_records ORDER BY timestamp DESC LIMIT 100")
-            legacy_rows = cursor.fetchall()
+            # Fetch landlord_record table (landlord payment records)
+            landlord_record_rows = []
+            try:
+                cursor.execute("SELECT * FROM landlord_record ORDER BY timestamp DESC LIMIT 100")
+                landlord_record_rows = cursor.fetchall()
+            except Exception as e:
+                logger.warning(f"Could not fetch landlord_record (table may not exist yet): {e}")
+            
+            # Fetch tenants table (tenant payment records)
+            tenant_rows = []
+            try:
+                cursor.execute("SELECT * FROM tenants WHERE reply IS NOT NULL AND timestamp IS NOT NULL ORDER BY timestamp DESC LIMIT 100")
+                tenant_rows = cursor.fetchall()
+            except Exception as e:
+                logger.warning(f"Could not fetch tenants with records (table may not exist yet): {e}")
             
             db_service.close_db_connection(conn)
-            logger.info(f"Retrieved {len(outgoing_rows)} outgoing, {len(incoming_rows)} incoming messages")
+            logger.info(f"Retrieved {len(outgoing_rows)} outgoing, {len(incoming_rows)} incoming, {len(landlord_record_rows)} landlord records, {len(tenant_rows)} tenant records")
             
             # Process outgoing messages
             outgoing_messages = []
@@ -168,40 +180,56 @@ def dashboard():
                     }
                 incoming_messages.append(msg_data)
             
-            # Process legacy rent_records for backward compatibility
-            tenant_messages = []
+            # Process landlord_record table (landlord payment records)
             landlord_messages = []
-            all_messages = []
-            
-            for row in legacy_rows:
-                # Handle both dict-like (PostgreSQL) and tuple-like (SQLite) rows
+            for row in landlord_record_rows:
                 if isinstance(row, dict):
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
-                    record_type = row.get('record_type', 'tenant')
                     msg_data = {
                         'phone': phone,
-                        'body': row['reply'],
-                        'status': row['reply'].upper(),
-                        'timestamp': row['timestamp'],
-                        'type': record_type
+                        'body': row.get('reply', ''),
+                        'status': row.get('reply', '').upper(),
+                        'timestamp': row.get('timestamp', ''),
+                        'type': 'landlord'
                     }
                 else:
                     # SQLite Row object
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
-                    record_type = row.get('record_type', 'tenant') if hasattr(row, 'get') else 'tenant'
                     msg_data = {
                         'phone': phone,
-                        'body': row['reply'],
-                        'status': row['reply'].upper(),
-                        'timestamp': row['timestamp'],
-                        'type': record_type
+                        'body': row.get('reply', ''),
+                        'status': row.get('reply', '').upper(),
+                        'timestamp': row.get('timestamp', ''),
+                        'type': 'landlord'
                     }
-                
-                all_messages.append(msg_data)
-                if record_type == 'landlord':
-                    landlord_messages.append(msg_data)
+                landlord_messages.append(msg_data)
+            
+            # Process tenants table (tenant payment records)
+            tenant_messages = []
+            for row in tenant_rows:
+                if isinstance(row, dict):
+                    phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
+                    msg_data = {
+                        'phone': phone,
+                        'body': row.get('reply', ''),
+                        'status': row.get('reply', '').upper(),
+                        'timestamp': row.get('timestamp', ''),
+                        'type': 'tenant'
+                    }
                 else:
-                    tenant_messages.append(msg_data)
+                    # SQLite Row object
+                    phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
+                    msg_data = {
+                        'phone': phone,
+                        'body': row.get('reply', ''),
+                        'status': row.get('reply', '').upper(),
+                        'timestamp': row.get('timestamp', ''),
+                        'type': 'tenant'
+                    }
+                tenant_messages.append(msg_data)
+            
+            # Combine all messages for total count
+            all_messages = landlord_messages + tenant_messages
             
             # Calculate statistics
             total_messages = len(all_messages)

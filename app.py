@@ -263,6 +263,37 @@ def init_database(database_url, logger):
             )
         ''')
         
+        # Create landlord_record table - landlord payment records
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS landlord_record (
+                id SERIAL PRIMARY KEY,
+                phone_number TEXT NOT NULL,
+                reply TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Update tenants table structure to also store payment records
+        # Check if reply and timestamp columns exist in tenants table
+        cursor.execute('''
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='tenants' AND column_name='reply'
+                ) THEN
+                    ALTER TABLE tenants ADD COLUMN reply TEXT;
+                END IF;
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='tenants' AND column_name='timestamp'
+                ) THEN
+                    ALTER TABLE tenants ADD COLUMN timestamp TEXT;
+                END IF;
+            END $$;
+        ''')
+        
         conn.commit()
         cursor.close()
         conn.close()

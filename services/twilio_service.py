@@ -74,29 +74,42 @@ def process_incoming_sms(phone_number, reply, timestamp, db_service, mask_phone_
                     (phone_number, reply, 1 if is_yes else 0, 1 if is_no else 0)
                 )
         
-        # Also store in legacy rent_records table for backward compatibility
-        if DATABASE_URL:
-            # PostgreSQL - use %s placeholders
-            from psycopg2.extras import RealDictCursor
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute(
-                "INSERT INTO rent_records (phone_number, reply, timestamp, record_type) VALUES (%s, %s, %s, %s)",
-                (masked_phone, reply, timestamp, record_type)
-            )
-        else:
-            # SQLite - use ? placeholders
-            cursor = conn.cursor()
-            # Check if record_type column exists
-            try:
+        # Store in appropriate table based on record type
+        if record_type == 'landlord':
+            # Store in landlord_record table
+            if DATABASE_URL:
+                # PostgreSQL
+                from psycopg2.extras import RealDictCursor
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
                 cursor.execute(
-                    "INSERT INTO rent_records (phone_number, reply, timestamp, record_type) VALUES (?, ?, ?, ?)",
-                    (masked_phone, reply, timestamp, record_type)
-                )
-            except:
-                # Fallback for older schema
-                cursor.execute(
-                    "INSERT INTO rent_records (phone_number, reply, timestamp) VALUES (?, ?, ?)",
+                    "INSERT INTO landlord_record (phone_number, reply, timestamp) VALUES (%s, %s, %s)",
                     (masked_phone, reply, timestamp)
+                )
+            else:
+                # SQLite
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO landlord_record (phone_number, reply, timestamp) VALUES (?, ?, ?)",
+                    (masked_phone, reply, timestamp)
+                )
+        else:
+            # Store in tenants table for tenant records
+            # Note: tenants table requires name and rent_amount, so we use defaults
+            if DATABASE_URL:
+                # PostgreSQL
+                from psycopg2.extras import RealDictCursor
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                # Insert with default values for required fields
+                cursor.execute(
+                    "INSERT INTO tenants (phone_number, reply, timestamp, name, address, rent_amount) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (masked_phone, reply, timestamp, 'Unknown', 'Unknown', 0.00)
+                )
+            else:
+                # SQLite
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO tenants (phone_number, reply, timestamp, name, address, rent_amount) VALUES (?, ?, ?, ?, ?, ?)",
+                    (masked_phone, reply, timestamp, 'Unknown', 'Unknown', 0.0)
                 )
         
         conn.commit()
