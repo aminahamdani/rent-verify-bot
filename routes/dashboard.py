@@ -91,21 +91,21 @@ def dashboard():
             except Exception as e:
                 logger.warning(f"Could not fetch incoming_messages (table may not exist yet): {e}")
             
-            # Fetch landlord_record table (landlord payment records)
+            # Fetch landlord_record table (landlord records)
             landlord_record_rows = []
             try:
-                cursor.execute("SELECT * FROM landlord_record ORDER BY timestamp DESC LIMIT 100")
+                cursor.execute("SELECT * FROM landlord_record ORDER BY created_at DESC LIMIT 100")
                 landlord_record_rows = cursor.fetchall()
             except Exception as e:
                 logger.warning(f"Could not fetch landlord_record (table may not exist yet): {e}")
             
-            # Fetch tenants table (tenant payment records)
+            # Fetch tenants table (tenant payment records) - show all tenants
             tenant_rows = []
             try:
-                cursor.execute("SELECT * FROM tenants WHERE reply IS NOT NULL AND timestamp IS NOT NULL ORDER BY timestamp DESC LIMIT 100")
+                cursor.execute("SELECT * FROM tenants ORDER BY created_at DESC LIMIT 100")
                 tenant_rows = cursor.fetchall()
             except Exception as e:
-                logger.warning(f"Could not fetch tenants with records (table may not exist yet): {e}")
+                logger.warning(f"Could not fetch tenants (table may not exist yet): {e}")
             
             db_service.close_db_connection(conn)
             logger.info(f"Retrieved {len(outgoing_rows)} outgoing, {len(incoming_rows)} incoming, {len(landlord_record_rows)} landlord records, {len(tenant_rows)} tenant records")
@@ -186,9 +186,13 @@ def dashboard():
                 if isinstance(row, dict):
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
                     msg_data = {
+                        'name': row.get('name', 'N/A'),
                         'phone': phone,
-                        'body': row.get('reply', ''),
-                        'status': row.get('reply', '').upper(),
+                        'email': row.get('email', 'N/A'),
+                        'home_address': row.get('home_address', 'N/A'),
+                        'num_units': row.get('num_units', 0),
+                        'reply': row.get('reply', ''),
+                        'status': row.get('reply', '').upper() if row.get('reply') else '',
                         'timestamp': row.get('timestamp', ''),
                         'type': 'landlord'
                     }
@@ -196,9 +200,13 @@ def dashboard():
                     # SQLite Row object
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
                     msg_data = {
+                        'name': row.get('name', 'N/A'),
                         'phone': phone,
-                        'body': row.get('reply', ''),
-                        'status': row.get('reply', '').upper(),
+                        'email': row.get('email', 'N/A'),
+                        'home_address': row.get('home_address', 'N/A'),
+                        'num_units': row.get('num_units', 0),
+                        'reply': row.get('reply', ''),
+                        'status': row.get('reply', '').upper() if row.get('reply') else '',
                         'timestamp': row.get('timestamp', ''),
                         'type': 'landlord'
                     }
@@ -210,9 +218,13 @@ def dashboard():
                 if isinstance(row, dict):
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
                     msg_data = {
+                        'name': row.get('name', 'N/A'),
                         'phone': phone,
-                        'body': row.get('reply', ''),
-                        'status': row.get('reply', '').upper(),
+                        'email': row.get('email', 'N/A'),
+                        'address': row.get('address', 'N/A'),
+                        'rent_amount': row.get('rent_amount', 0),
+                        'reply': row.get('reply', ''),
+                        'status': row.get('reply', '').upper() if row.get('reply') else '',
                         'timestamp': row.get('timestamp', ''),
                         'type': 'tenant'
                     }
@@ -220,9 +232,13 @@ def dashboard():
                     # SQLite Row object
                     phone = mask_phone_number(row['phone_number']) if use_mask else row['phone_number']
                     msg_data = {
+                        'name': row.get('name', 'N/A'),
                         'phone': phone,
-                        'body': row.get('reply', ''),
-                        'status': row.get('reply', '').upper(),
+                        'email': row.get('email', 'N/A'),
+                        'address': row.get('address', 'N/A'),
+                        'rent_amount': row.get('rent_amount', 0),
+                        'reply': row.get('reply', ''),
+                        'status': row.get('reply', '').upper() if row.get('reply') else '',
                         'timestamp': row.get('timestamp', ''),
                         'type': 'tenant'
                     }

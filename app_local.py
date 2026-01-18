@@ -157,12 +157,29 @@ def init_db():
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS landlord_record (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
                 phone_number TEXT NOT NULL,
-                reply TEXT NOT NULL,
-                timestamp TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                email TEXT,
+                home_address TEXT NOT NULL,
+                num_units INTEGER DEFAULT 0,
+                reply TEXT,
+                timestamp TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Add new columns to existing landlord_record table if they don't exist
+        cursor.execute("PRAGMA table_info(landlord_record)")
+        landlord_cols = [col[1] for col in cursor.fetchall()]
+        if 'name' not in landlord_cols:
+            cursor.execute("ALTER TABLE landlord_record ADD COLUMN name TEXT")
+        if 'email' not in landlord_cols:
+            cursor.execute("ALTER TABLE landlord_record ADD COLUMN email TEXT")
+        if 'home_address' not in landlord_cols:
+            cursor.execute("ALTER TABLE landlord_record ADD COLUMN home_address TEXT")
+        if 'num_units' not in landlord_cols:
+            cursor.execute("ALTER TABLE landlord_record ADD COLUMN num_units INTEGER DEFAULT 0")
         
         # Update tenants table - add reply and timestamp columns if they don't exist
         cursor.execute("PRAGMA table_info(tenants)")

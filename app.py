@@ -289,11 +289,47 @@ def init_database(database_url, logger):
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS landlord_record (
                 id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
                 phone_number TEXT NOT NULL,
-                reply TEXT NOT NULL,
-                timestamp TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                email TEXT,
+                home_address TEXT NOT NULL,
+                num_units INTEGER DEFAULT 0,
+                reply TEXT,
+                timestamp TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        ''')
+        
+        # Add new columns to existing landlord_record table if they don't exist
+        cursor.execute('''
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='landlord_record' AND column_name='name'
+                ) THEN
+                    ALTER TABLE landlord_record ADD COLUMN name TEXT;
+                END IF;
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='landlord_record' AND column_name='email'
+                ) THEN
+                    ALTER TABLE landlord_record ADD COLUMN email TEXT;
+                END IF;
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='landlord_record' AND column_name='home_address'
+                ) THEN
+                    ALTER TABLE landlord_record ADD COLUMN home_address TEXT;
+                END IF;
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='landlord_record' AND column_name='num_units'
+                ) THEN
+                    ALTER TABLE landlord_record ADD COLUMN num_units INTEGER DEFAULT 0;
+                END IF;
+            END $$;
         ''')
         
         # Update tenants table structure to also store payment records

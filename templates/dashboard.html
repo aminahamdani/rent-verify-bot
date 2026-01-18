@@ -705,15 +705,17 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>Name</th>
                             <th>Phone Number</th>
-                            <th>Message</th>
-                            <th>Status</th>
-                            <th>Received At</th>
+                            <th>Email</th>
+                            <th>Home Address</th>
+                            <th>Number of Units</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for msg in landlord_messages %}
                         <tr>
+                            <td>{{ msg.name }}</td>
                             <td>
                                 {% set phone = msg.phone | string %}
                                 {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
@@ -726,21 +728,12 @@
                                 {% if digits_only | length >= 4 %}
                                     ******{{ digits_only[-4:] | join('') }}
                                 {% else %}
-                                    Unknown
-                                {% endif %}
-                                <span class="type-badge landlord">Landlord</span>
-                            </td>
-                            <td>{{ msg.body }}</td>
-                            <td>
-                                {% if msg.status == 'YES' %}
-                                    <span class="badge yes">YES</span>
-                                {% elif msg.status == 'NO' %}
-                                    <span class="badge no">NO</span>
-                                {% else %}
-                                    <span class="badge pending">Pending</span>
+                                    {{ msg.phone }}
                                 {% endif %}
                             </td>
-                            <td>{{ msg.timestamp }}</td>
+                            <td>{{ msg.email or 'N/A' }}</td>
+                            <td>{{ msg.home_address }}</td>
+                            <td>{{ msg.num_units }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -780,15 +773,17 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>Name</th>
                             <th>Phone Number</th>
-                            <th>Message</th>
-                            <th>Status</th>
-                            <th>Received At</th>
+                            <th>Email</th>
+                            <th>Address</th>
+                            <th>Rent Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for msg in tenant_messages %}
                         <tr>
+                            <td>{{ msg.name }}</td>
                             <td>
                                 {% set phone = msg.phone | string %}
                                 {% set cleaned = phone | replace('+', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace(' ', '') %}
@@ -801,21 +796,12 @@
                                 {% if digits_only | length >= 4 %}
                                     ******{{ digits_only[-4:] | join('') }}
                                 {% else %}
-                                    Unknown
-                                {% endif %}
-                                <span class="type-badge tenant">Tenant</span>
-                            </td>
-                            <td>{{ msg.body }}</td>
-                            <td>
-                                {% if msg.status == 'YES' %}
-                                    <span class="badge yes">YES</span>
-                                {% elif msg.status == 'NO' %}
-                                    <span class="badge no">NO</span>
-                                {% else %}
-                                    <span class="badge pending">Pending</span>
+                                    {{ msg.phone }}
                                 {% endif %}
                             </td>
-                            <td>{{ msg.timestamp }}</td>
+                            <td>{{ msg.email or 'N/A' }}</td>
+                            <td>{{ msg.address }}</td>
+                            <td>${{ "%.2f"|format(msg.rent_amount|float) if msg.rent_amount else '0.00' }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
