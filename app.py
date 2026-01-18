@@ -107,6 +107,28 @@ def create_app():
     except ImportError:
         pass  # Relay is optional
 
+    # Health check endpoint for Azure App Service
+    from flask import jsonify
+    @app.route('/health')
+    def health_check():
+        """Health check endpoint for Azure App Service monitoring."""
+        try:
+            # Basic health check - just return OK
+            # Optionally check database connectivity
+            DATABASE_URL = os.getenv('DATABASE_URL')
+            if DATABASE_URL:
+                try:
+                    conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
+                    conn.close()
+                    return jsonify({'status': 'healthy', 'database': 'connected'}), 200
+                except Exception as db_error:
+                    logger.warning(f"Database health check failed: {db_error}")
+                    return jsonify({'status': 'degraded', 'database': 'disconnected'}), 503
+            return jsonify({'status': 'healthy'}), 200
+        except Exception as e:
+            logger.error(f"Health check error: {e}")
+            return jsonify({'status': 'unhealthy', 'error': str(e)}), 503
+
     # Import and register authentication and root routes
     from flask import request, render_template, session, redirect, url_for, flash
     from werkzeug.security import generate_password_hash, check_password_hash
