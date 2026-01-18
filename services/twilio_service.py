@@ -197,6 +197,40 @@ def send_sms_to_landlord(landlord_name, landlord_phone, landlord_address, landlo
             )
         
         conn.commit()
+        
+        # Also create/update landlord_record entry
+        try:
+            # Check if landlord already exists by phone number
+            cursor.execute(
+                "SELECT id FROM landlord_record WHERE phone_number = %s" if DATABASE_URL else 
+                "SELECT id FROM landlord_record WHERE phone_number = ?",
+                (landlord_phone,)
+            )
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Update existing landlord record
+                cursor.execute(
+                    """UPDATE landlord_record 
+                       SET name = %s, email = %s, home_address = %s, updated_at = CURRENT_TIMESTAMP
+                       WHERE phone_number = %s""" if DATABASE_URL else
+                    """UPDATE landlord_record 
+                       SET name = ?, email = ?, home_address = ?, updated_at = CURRENT_TIMESTAMP
+                       WHERE phone_number = ?""",
+                    (landlord_name, landlord_email or None, landlord_address, landlord_phone)
+                )
+            else:
+                # Insert new landlord record
+                cursor.execute(
+                    "INSERT INTO landlord_record (name, phone_number, email, home_address) VALUES (%s, %s, %s, %s)" if DATABASE_URL else
+                    "INSERT INTO landlord_record (name, phone_number, email, home_address) VALUES (?, ?, ?, ?)",
+                    (landlord_name, landlord_phone, landlord_email or None, landlord_address)
+                )
+            conn.commit()
+        except Exception as e:
+            logger.warning(f"Could not update landlord_record: {e}")
+            # Continue even if this fails
+        
         conn.close()
         logger.info(f"Outgoing message stored in database for {landlord_name} ({landlord_phone})")
         return True, message_sid, None

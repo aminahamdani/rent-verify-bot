@@ -701,6 +701,34 @@
                         <div class="section-stat-label">Pending</div>
                     </div>
                 </div>
+                <div style="margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #2d3748;">Add New Landlord Record</h3>
+                    <form method="POST" action="{{ url_for('dashboard.add_landlord_record') }}" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Landlord Name *</label>
+                                <input type="text" name="name" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Phone Number *</label>
+                                <input type="tel" name="phone_number" required placeholder="+1234567890" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Email</label>
+                                <input type="email" name="email" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Home Address *</label>
+                                <input type="text" name="home_address" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Number of Units *</label>
+                                <input type="number" name="num_units" required min="0" value="0" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                        </div>
+                        <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">➕ Add Landlord Record</button>
+                    </form>
+                </div>
                 {% if landlord_messages %}
                 <table>
                     <thead>
@@ -768,6 +796,34 @@
                         <div class="section-stat-value" style="color: #ffc107;">{{ tenant_pending }}</div>
                         <div class="section-stat-label">Pending</div>
                     </div>
+                </div>
+                <div style="margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #2d3748;">Add New Tenant Record</h3>
+                    <form method="POST" action="{{ url_for('dashboard.add_tenant_record') }}" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Tenant Name *</label>
+                                <input type="text" name="name" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Phone Number *</label>
+                                <input type="tel" name="phone_number" required placeholder="+1234567890" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Email</label>
+                                <input type="email" name="email" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Address *</label>
+                                <input type="text" name="address" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #2d3748;">Rent Amount *</label>
+                                <input type="number" name="rent_amount" required min="0" step="0.01" value="0" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                        </div>
+                        <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">➕ Add Tenant Record</button>
+                    </form>
                 </div>
                 {% if tenant_messages %}
                 <table>

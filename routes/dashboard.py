@@ -542,3 +542,143 @@ def send_sms_to_landlord_route():
         return redirect(url_for('dashboard.dashboard'))
     
     return inner_send_sms()
+
+
+# ==================== Add Landlord Record Route ====================
+@dashboard_bp.route('/add-landlord-record', methods=['POST'])
+def add_landlord_record():
+    """Add a new landlord record to landlord_record table."""
+    try:
+        from app import login_required, logger
+    except ImportError:
+        try:
+            from app_local import login_required, logger
+        except ImportError:
+            import logging
+            logger = logging.getLogger(__name__)
+            def login_required(f):
+                return f
+    
+    @login_required
+    def inner_add_landlord():
+        try:
+            # Get form data
+            name = request.form.get('name', '').strip()
+            phone_number = request.form.get('phone_number', '').strip()
+            email = request.form.get('email', '').strip()
+            home_address = request.form.get('home_address', '').strip()
+            num_units = request.form.get('num_units', '0').strip()
+            
+            # Validate required fields
+            if not all([name, phone_number, home_address]):
+                flash('Please fill in all required fields (Name, Phone, Home Address).', 'danger')
+                return redirect(url_for('dashboard.dashboard'))
+            
+            try:
+                num_units = int(num_units) if num_units else 0
+            except ValueError:
+                num_units = 0
+            
+            # Insert into landlord_record table
+            import os
+            DATABASE_URL = os.getenv('DATABASE_URL')
+            conn = db_service.get_db_connection()
+            
+            if DATABASE_URL:
+                # PostgreSQL
+                from psycopg2.extras import RealDictCursor
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor.execute(
+                    "INSERT INTO landlord_record (name, phone_number, email, home_address, num_units) VALUES (%s, %s, %s, %s, %s)",
+                    (name, phone_number, email or None, home_address, num_units)
+                )
+            else:
+                # SQLite
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO landlord_record (name, phone_number, email, home_address, num_units) VALUES (?, ?, ?, ?, ?)",
+                    (name, phone_number, email or None, home_address, num_units)
+                )
+            
+            conn.commit()
+            conn.close()
+            flash(f'Landlord record added successfully for {name}!', 'success')
+            logger.info(f"Landlord record added: {name} ({phone_number})")
+        
+        except Exception as e:
+            logger.error(f"Error adding landlord record: {e}")
+            flash('Error adding landlord record. Please try again.', 'danger')
+        
+        return redirect(url_for('dashboard.dashboard'))
+    
+    return inner_add_landlord()
+
+
+# ==================== Add Tenant Record Route ====================
+@dashboard_bp.route('/add-tenant-record', methods=['POST'])
+def add_tenant_record():
+    """Add a new tenant record to tenants table."""
+    try:
+        from app import login_required, logger
+    except ImportError:
+        try:
+            from app_local import login_required, logger
+        except ImportError:
+            import logging
+            logger = logging.getLogger(__name__)
+            def login_required(f):
+                return f
+    
+    @login_required
+    def inner_add_tenant():
+        try:
+            # Get form data
+            name = request.form.get('name', '').strip()
+            phone_number = request.form.get('phone_number', '').strip()
+            email = request.form.get('email', '').strip()
+            address = request.form.get('address', '').strip()
+            rent_amount = request.form.get('rent_amount', '0').strip()
+            
+            # Validate required fields
+            if not all([name, phone_number, address, rent_amount]):
+                flash('Please fill in all required fields (Name, Phone, Address, Rent Amount).', 'danger')
+                return redirect(url_for('dashboard.dashboard'))
+            
+            try:
+                rent_amount = float(rent_amount) if rent_amount else 0.0
+            except ValueError:
+                rent_amount = 0.0
+            
+            # Insert into tenants table
+            import os
+            DATABASE_URL = os.getenv('DATABASE_URL')
+            conn = db_service.get_db_connection()
+            
+            if DATABASE_URL:
+                # PostgreSQL
+                from psycopg2.extras import RealDictCursor
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor.execute(
+                    "INSERT INTO tenants (name, phone_number, email, address, rent_amount) VALUES (%s, %s, %s, %s, %s)",
+                    (name, phone_number, email or None, address, rent_amount)
+                )
+            else:
+                # SQLite
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO tenants (name, phone_number, email, address, rent_amount) VALUES (?, ?, ?, ?, ?)",
+                    (name, phone_number, email or None, address, rent_amount)
+                )
+            
+            conn.commit()
+            conn.close()
+            flash(f'Tenant record added successfully for {name}!', 'success')
+            logger.info(f"Tenant record added: {name} ({phone_number})")
+        
+        except Exception as e:
+            logger.error(f"Error adding tenant record: {e}")
+            flash('Error adding tenant record. Please try again.', 'danger')
+        
+        return redirect(url_for('dashboard.dashboard'))
+    
+    return inner_add_tenant()
