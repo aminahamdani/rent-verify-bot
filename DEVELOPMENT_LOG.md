@@ -53,10 +53,12 @@ This file documents the major steps taken to develop the RentVerify project, inc
 - Service layer refinements for better error handling and data processing.
 - Database service improvements for connection management.
 
-### Latest Updates (2026)
-- Application updates with dashboard enhancements and service layer improvements.
-- All changes committed and pushed to GitHub (commit: 735a23d).
-- Both Render and Azure deployments will auto-deploy from latest push.
+### Latest Updates (Jan 2026)
+- Redesigned admin login page to a Real Nest-inspired two-pane layout (hero + form).
+- Fixed admin credentials to `amina` / `amina0000` for both `app.py` and `app_local.py` per request.
+- Added SQLite-friendly local dev flow (no psycopg2 required when `DATABASE_URL` is unset); guarded PostgreSQL imports in `services/db_service.py`.
+- Ensured dashboard blueprint is registered in `app_local.py` so login redirects to `/dashboard`.
+- Changes committed and pushed (commit: 36031f0).
 
 ---
 

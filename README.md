@@ -41,7 +41,7 @@
 
 The project now uses modular blueprints, a service layer, centralized error handling, and explicit input validation contracts.
 
-See [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) for a step-by-step development history.
+See [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) for a step-by-step development history and the latest UI/auth updates (including the Real Nest-inspired login page and fixed admin credentials).
 
 ```
 RentVerify/
@@ -109,8 +109,8 @@ Other → Saved as Pending             →  Dashboard: Pending badge (yellow)
 ## Local Setup
 
 ### Prerequisites
-- Python 3.11+
-- PostgreSQL installed locally OR use remote PostgreSQL (Render, Neon, etc.)
+- Python 3.11+ (local dev works even without PostgreSQL)
+- PostgreSQL installed locally OR use remote PostgreSQL (Render, Neon, etc.) — optional if you run SQLite-only local mode
 
 ### 1. Clone the repository
 ```bash
@@ -130,7 +130,7 @@ venv\Scripts\activate             # Windows
 pip install -r requirements.txt
 ```
 
-### 4. Create `.env` file
+### 4. Create `.env` file (optional for SQLite local)
 Create a `.env` file in the root directory:
 ```env
 # Database
@@ -151,14 +151,18 @@ FLASK_ENV=development
 PORT=5000
 ```
 
-### 5. Initialize database
+### 5. Run locally (choose one)
+
+**Option A: SQLite (no PostgreSQL required)**
 ```bash
-python create_tables.py
+python app_local.py
+# Login with username=amina password=amina0000
 ```
 
-### 6. Run the Flask app
+**Option B: PostgreSQL**
 ```bash
-python app.py
+python create_tables.py   # initialize tables
+python app.py             # or gunicorn app:app
 ```
 The app runs on `http://localhost:5000`
 
