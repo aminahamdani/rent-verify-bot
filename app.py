@@ -133,11 +133,9 @@ def create_app():
     from flask import request, render_template, session, redirect, url_for, flash
     from werkzeug.security import generate_password_hash, check_password_hash
 
-    ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
-    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
-    if not ADMIN_USERNAME or not ADMIN_PASSWORD:
-        logger.error("ADMIN_USERNAME and ADMIN_PASSWORD must be set in environment variables!")
-        raise ValueError("ADMIN_USERNAME and ADMIN_PASSWORD must be set")
+    # Admin credentials (fixed as requested)
+    ADMIN_USERNAME = 'amina'
+    ADMIN_PASSWORD = 'amina0000'
     ADMIN_PASSWORD_HASH = generate_password_hash(ADMIN_PASSWORD)
 
     def login_required(f):

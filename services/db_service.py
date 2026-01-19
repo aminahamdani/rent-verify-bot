@@ -5,8 +5,12 @@ Supports both PostgreSQL (production) and SQLite (local development)
 import os
 import sqlite3
 import logging
-import psycopg2
-from psycopg2.extras import RealDictCursor
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except Exception:  # psycopg2 may be unavailable in local dev (e.g., Python 3.14)
+    psycopg2 = None
+    RealDictCursor = None
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +23,11 @@ def get_db_connection():
     
     if DATABASE_URL:
         # PostgreSQL (production)
+        if psycopg2 is None:
+            raise ModuleNotFoundError(
+                "psycopg2 is required for PostgreSQL mode but is not installed. "
+                "Unset DATABASE_URL for SQLite local dev, or install psycopg2-binary on a supported Python version."
+            )
         try:
             conn = psycopg2.connect(DATABASE_URL)
             return conn
@@ -49,7 +58,7 @@ def execute_query(query, params=None, fetch=False):
     try:
         if DATABASE_URL:
             # PostgreSQL - use %s placeholders
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(cursor_factory=RealDictCursor)  # type: ignore[arg-type]
             if params:
                 cursor.execute(query, params)
             else:

@@ -51,9 +51,9 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = 3600
 
-# Admin credentials
-ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'password')
+# Admin credentials (fixed as requested)
+ADMIN_USERNAME = 'amina'
+ADMIN_PASSWORD = 'amina0000'
 ADMIN_PASSWORD_HASH = generate_password_hash(ADMIN_PASSWORD)
 
 # Ensure the instance folder exists
@@ -267,16 +267,17 @@ from routes.sms import sms_bp
 app.register_blueprint(sms_bp)
 
 from routes.dashboard import dashboard_bp
+app.register_blueprint(dashboard_bp)
 # ==================== Run Application ====================
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     print(f"\n{'='*60}")
-    print(f"🚀 LOCAL DEVELOPMENT SERVER")
+    print("LOCAL DEVELOPMENT SERVER")
     print(f"{'='*60}")
-    print(f"📍 URL: http://localhost:{port}")
-    print(f"👤 Username: {ADMIN_USERNAME}")
-    print(f"🔑 Password: {ADMIN_PASSWORD}")
-    print(f"💾 Database: {DB_PATH}")
+    print(f"URL: http://localhost:{port}")
+    print(f"Username: {ADMIN_USERNAME}")
+    print(f"Password: {ADMIN_PASSWORD}")
+    print(f"Database: {DB_PATH}")
     print(f"{'='*60}\n")
     app.run(host='0.0.0.0', port=port, debug=True)
