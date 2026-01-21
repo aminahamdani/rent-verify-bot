@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RentVerify | Real Nest Login</title>
+    <title>Sign In - Rent Verify</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 </head>
@@ -11,17 +11,21 @@
     <div class="page">
         <div class="auth-card">
             <div class="hero-pane">
-                <div class="hero-badge">Rent Verify</div>
-                <img src="https://cdn.dribbble.com/userupload/17275370/file/original-b8303b34e1f0b777daf06cabdb49a76.png?resize=1100x" alt="Row of modern homes">
-                <div class="hero-overlay"></div>
-                <div class="hero-text">
-                    <h3>Manage Properties Efficiently</h3>
-                    <p>Easily track rent payments, maintenance requests, and tenant communications in one place. Say goodbye to manual hassle with Rent Verify.</p>
+                <div class="hero-content">
+                    <div class="logo">
+                        <div class="logo-icon">🏠</div>
+                        <span class="logo-text">Rent Verify</span>
+                    </div>
+                    <div class="hero-text">
+                        <h2>Streamline Your Property Management</h2>
+                        <p>Automate your rent collection process with intelligent payment tracking, comprehensive tenant management, and powerful reporting. Save time and reduce errors.</p>
+                    </div>
+                    <div class="copyright">© 2026 Rent Verify. All rights reserved.</div>
                 </div>
             </div>
             <div class="form-pane">
-                <h1>Welcome Back to Rent Verify!</h1>
-                <p class="form-subtitle">Sign in to your account</p>
+                <h1>Sign In</h1>
+                <p class="welcome-message">Welcome back! Please sign in to continue.</p>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -35,43 +39,18 @@
 
                 <form method="POST" action="/login" class="form">
                     <label class="field">
-                        <span class="field-label">Your Email</span>
-                        <input type="text" name="username" placeholder="info.madhu786@gmail.com" value="amina" required>
+                        <span class="field-label">Username or Email</span>
+                        <input type="text" name="username" placeholder="Enter your username or email" value="amina" required>
                     </label>
                     <label class="field">
                         <span class="field-label">Password</span>
-                        <input type="password" name="password" placeholder="••••••••" value="amina0000" required>
+                        <input type="password" name="password" placeholder="Enter your password" value="amina0000" required>
                     </label>
 
-                    <div class="options-row">
-                        <label class="remember">
-                            <input type="checkbox" name="remember" checked>
-                            <span>Remember me</span>
-                        </label>
-                        <a class="link" href="#">Forgot Password?</a>
-                    </div>
-
-                    <button type="submit" class="primary-btn">Login</button>
+                    <button type="submit" class="sign-in-btn">Sign In</button>
                 </form>
 
-                <div class="divider">
-                    <span>Instant Login</span>
-                </div>
-
-                <div class="social-row">
-                    <button class="social-btn">
-                        <span class="icon">G</span>
-                        <span>Sign in with Google</span>
-                    </button>
-                    <button class="social-btn">
-                        <span class="icon"></span>
-                        <span>Sign in with Apple</span>
-                    </button>
-                </div>
-
-                <p class="register">
-                    Don't have any account? <a class="link" href="#">Register</a>
-                </p>
+                <a href="#" class="profile-link">Password and Profile Management</a>
             </div>
         </div>
     </div>
